@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (V10.0 詞性智能辨識版)</title>
+<title>中文科識字通 (V11.0 智能詞語詞性版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -87,7 +87,22 @@
         display: flex; justify-content: space-between; align-items: center;
         border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px;
     }
+    
+    /* 🔥 修正：詞語標題區塊，容納詞性標籤 */
+    .title-block { display: flex; align-items: center; gap: 15px; }
     .word-title { font-size: 32px; font-weight: bold; color: var(--primary); }
+    
+    /* 🔥 新增：詞語級詞性標籤 (大號) */
+    .word-pos-tag {
+        font-size: 18px; padding: 4px 12px; border-radius: 15px;
+        color: white; font-weight: bold; background-color: #607d8b;
+        vertical-align: middle;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .word-pos-tag.noun { background-color: #1976d2; }
+    .word-pos-tag.verb { background-color: #388e3c; }
+    .word-pos-tag.adj { background-color: #f57c00; }
+
     .audio-controls button {
         background: var(--primary-bg); color: var(--primary); border: none;
         padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-left: 10px;
@@ -144,17 +159,16 @@
     }
     .info-row { margin-bottom: 5px; font-size: 18px; color: #444; }
 
-    /* 🔥 詞性標籤樣式 (New) */
+    /* 單字詞性標籤 (小號) */
     .pos-container { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
     .pos-tag {
         font-size: 14px; padding: 2px 8px; border-radius: 12px;
-        color: white; font-weight: bold; background-color: #78909c; /* 預設灰藍 */
+        color: white; font-weight: bold; background-color: #78909c; 
         box-shadow: 0 2px 0 rgba(0,0,0,0.1);
     }
-    /* 不同詞性可以有微細差別，這裡統一用一種好看的顏色，或者用JS動態上色 */
-    .pos-tag.noun { background-color: #42a5f5; } /* 名詞藍 */
-    .pos-tag.verb { background-color: #66bb6a; } /* 動詞綠 */
-    .pos-tag.adj { background-color: #ffa726; }  /* 形容詞橙 */
+    .pos-tag.noun { background-color: #42a5f5; } 
+    .pos-tag.verb { background-color: #66bb6a; } 
+    .pos-tag.adj { background-color: #ffa726; }  
 
     /* 解釋文字 */
     .js-def-text {
@@ -259,7 +273,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (詞語合併)</button>
         </div>
 
-        <h1>📘 中文科識字通 (V10.0 詞性智能辨識版)</h1>
+        <h1>📘 中文科識字通 (V11.0 智能詞語詞性版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -292,7 +306,9 @@
     <template id="card-template">
         <div class="word-group-wrapper">
             <div class="word-group-header">
-                <span class="word-title js-title"></span>
+                <div class="title-block">
+                    <span class="word-title js-title"></span>
+                    <div class="js-word-pos"></div> </div>
                 <div class="audio-controls">
                     <button class="js-btn-mandarin">🔊 普通話</button>
                     <button class="js-btn-cantonese">🔊 粵語</button>
@@ -375,6 +391,9 @@
                         setupCharacterInfo(char, card);
                     }
                     updateDefinition(word, card);
+                    
+                    // 🔥 啟動詞語級詞性查詢
+                    fetchWordPOS(word, card);
                 }
             } catch (err) {
                 console.error(err);
@@ -477,7 +496,7 @@
             }
         }
 
-        // --- 🔥 更新：setupCharacterInfo 含詞性偵測 ---
+        // --- 🔥 智能詞性查詢 (單字級) ---
         function setupCharacterInfo(char, cardElement) {
             const infoContainer = cardElement.querySelector('.js-info-container');
             const pinyin = cnchar.spell(char, 'tone');
@@ -494,60 +513,77 @@
                         <div class="info-row">
                             部首：<span onclick="openRadicalModal('${radical}')" class="info-radical-link">${radical}</span>
                         </div>
-                        <div class="pos-container" id="pos-${char}-${Math.random().toString(36).substr(2,5)}">
-                            <span style="font-size:12px; color:#999;">詞性載入中...</span>
-                        </div>
+                        <div class="pos-container"></div>
                     </div>
                 </div>
             `;
             infoContainer.appendChild(div);
-
-            // 🔥 啟動詞性查詢 (Moedict Uni API)
+            // 查詢單字詞性 (即便已經有詞語詞性，單字屬性仍具教學價值)
             fetchPOS(char, div.querySelector('.pos-container'));
         }
 
-        // --- 🔥 新增：詞性查詢函式 ---
         async function fetchPOS(char, container) {
             try {
-                // 查詢單字 API
                 const res = await fetch(`https://www.moedict.tw/uni/${encodeURIComponent(char)}.json`);
-                if(!res.ok) throw new Error('No Data');
+                if(!res.ok) return;
                 const data = await res.json();
                 
-                // 提取所有詞性
                 const types = new Set();
                 if(data.heteronyms) {
                     data.heteronyms.forEach(h => {
                         if(h.definitions) {
                             h.definitions.forEach(d => {
-                                if(d.type) types.add(d.type.replace('詞','')); // 簡化顯示，如 "名詞" -> "名"
+                                if(d.type) types.add(d.type.replace('詞','')); 
+                            });
+                        }
+                    });
+                }
+                if(types.size > 0) {
+                    types.forEach(type => {
+                        const tag = document.createElement('span');
+                        tag.className = 'pos-tag';
+                        tag.innerText = type;
+                        if(type.includes('名')) tag.classList.add('noun');
+                        else if(type.includes('動')) tag.classList.add('verb');
+                        else if(type.includes('形') || type.includes('副')) tag.classList.add('adj');
+                        container.appendChild(tag);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        // --- 🔥 智能詞語級詞性查詢 (整詞優先) ---
+        async function fetchWordPOS(word, cardElement) {
+            const container = cardElement.querySelector('.js-word-pos');
+            try {
+                // 查詢萌典詞條
+                const res = await fetch(`https://www.moedict.tw/a/${encodeURIComponent(word)}.json`);
+                if(!res.ok) return;
+                const data = await res.json();
+                
+                const types = new Set();
+                if(data.h) {
+                    data.h.forEach(h => {
+                        if(h.d) {
+                            h.d.forEach(d => {
+                                if(d.type) types.add(d.type.replace('詞',''));
                             });
                         }
                     });
                 }
 
-                container.innerHTML = ''; // 清空載入文字
-                if(types.size === 0) {
-                    container.innerHTML = '<span style="color:#ccc; font-size:12px;">無詞性資料</span>';
-                } else {
-                    // 渲染標籤
+                if(types.size > 0) {
                     types.forEach(type => {
                         const tag = document.createElement('span');
-                        tag.className = 'pos-tag';
+                        tag.className = 'word-pos-tag'; // 使用大號標籤樣式
                         tag.innerText = type;
-                        
-                        // 簡單配色
                         if(type.includes('名')) tag.classList.add('noun');
                         else if(type.includes('動')) tag.classList.add('verb');
-                        else if(type.includes('形') || type.includes('副')) tag.classList.add('adj');
-                        
+                        else if(type.includes('形')) tag.classList.add('adj');
                         container.appendChild(tag);
                     });
                 }
-
-            } catch(e) {
-                container.innerHTML = ''; // 失敗則留空，保持版面乾淨
-            }
+            } catch(e) {}
         }
 
         function startQuizLoop(uid) {
@@ -678,7 +714,6 @@
                     let defs = [];
                     if(data.h) data.h.forEach(h => { if(h.d) h.d.forEach(d => { if(d.f) defs.push(d.f.replace(/[~`\[\]]/g,"")); })});
                     
-                    // 🔥 修正：使用 join('\n') 並配合 CSS white-space 實現換行
                     defEl.textContent = defs.length ? defs.map((d,i)=>`${i+1}. ${d}`).join('\n') : "無詳細解釋";
                 } else { defEl.textContent = "查無資料"; }
             } catch { defEl.textContent = "無資料"; }
