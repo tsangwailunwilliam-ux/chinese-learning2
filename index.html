@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (V6.0 最終完美版)</title>
+<title>中文科識字通 (V7.0 最終完結篇)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -99,12 +99,15 @@
         border-left: 4px solid var(--primary); padding-left: 8px;
     }
 
-    /* 🔥 修正：螢幕版改為標準田字格 */
+    /* 🔥 修正 1：螢幕版「田字格」 (紅色虛線) */
     .grid-box {
         width: var(--grid-size); height: var(--grid-size);
-        border: 3px solid var(--primary); background-color: white;
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNjAnIGhlaWdodD0nMTYwJz4KICA8bGluZSB4MT0nMCcgeTE9nODAnIHgyPScxNjAnIHkyPSc4MCcgc3Ryb2tlPScjOTBjYWY5JyBzdHJva2Utd2lkdGg9JzInIHN0cm9rZS1kYXNoYXJyYXk9JzgsOCcvLz4KICA8bGluZSB4MT0nODAnIHkxPScwJyB4Mj0nODAnIHkyPScxNjAnIHN0cm9rZT0nIzkwY2FmOScgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtZGFzaGFycmF5PSc4LDgnLz4KPC9zdmc+");
-        background-size: cover; position: relative; margin-bottom: 10px;
+        border: 3px solid var(--primary); 
+        background-color: white;
+        /* 使用清晰的紅色虛線 SVG */
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxsaW5lIHgxPSI1MCUiIHkxPSIwIiB4Mj0iNTAlIiB5Mj0iMTAwJSIgc3Ryb2tlPSIjZmZjY2NjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjgsOCIvPjxsaW5lIHgxPSIwIiB5MT0iNTAlIiB4Mj0iMTAwJSIgeTI9IjUwJSIgc3Ryb2tlPSIjZmZjY2NjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjgsOCIvPjwvc3ZnPg==");
+        background-size: 100% 100%;
+        margin-bottom: 10px;
     }
 
     /* 拆解圖樣式 */
@@ -164,11 +167,11 @@
         
         .print-main-line { display: flex; align-items: center; margin-bottom: 10px; }
         
-        /* 🔥 修正：左側大字區塊改為可換行，避免被切掉 */
+        /* 左側大字區塊 */
         .print-info-col { 
             display: flex; flex-wrap: wrap; gap: 10px; 
             padding-right: 15px; border-right: 2px solid #000; margin-right: 15px;
-            width: 150px; /* 固定寬度，確保整齊 */
+            width: 150px; 
             justify-content: center; align-content: center;
         }
         .print-char-block { text-align: center; margin-bottom: 5px; } 
@@ -176,29 +179,25 @@
         .print-pinyin { display: none; }
         
         .print-grid-container { flex: 1; display: flex; gap: 5px; }
+        /* 列印版田字格 (黑色虛線) */
         .print-grid-box {
             width: 70px; height: 70px; border: 1px solid #000;
             background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc3MCcgaGVpZ2h0PSc3MCc+CiAgPGxpbmUgeDE9JzAnIHkxPSczNScgeDI9JzcwJyB5Mj0nMzUnIHN0cm9rZT0nI2NjYycgc3Ryb2tlLXdpZHRoPScwLjUnIHN0cm9rZS1kYXNoYXJyYXk9JzMsMycvPgogIDxsaW5lIHgxPSczNScgeTE9JzAnIHgyPSczNScgeTI9JzcwJyBzdHJva2U9JyNjY2MnIHN0cm9rZS13aWR0aD0nMC41JyBzdHJva2UtZGFzaGFycmF5PSczLDMnLz4KPC9zdmc+");
         }
         
-        /* 🔥 修正：筆畫拆解強制換行，保持工整 */
+        /* 筆畫拆解 */
         .print-breakdown-area { margin-left: 20px; }
         .print-breakdown-row { 
             display: flex; align-items: center; margin-top: 8px; 
-            border-bottom: 1px dotted #eee; padding-bottom: 5px; /* 增加分隔線 */
+            border-bottom: 1px dotted #eee; padding-bottom: 5px; 
         }
-        
-        /* 字頭 (學：) */
         .print-label { 
             font-size: 16px; font-weight: bold; color: #000; 
-            width: 40px; flex-shrink: 0; /* 固定寬度，不壓縮 */
+            width: 40px; flex-shrink: 0;
         }
-        
-        /* 拆解圖容器 */
         .print-breakdown-imgs {
             display: flex; flex-wrap: wrap; gap: 5px;
         }
-
         .print-step-box { width: 35px; height: 35px; border: 1px solid #ccc; position: relative; }
     }
 </style>
@@ -210,7 +209,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (詞語合併)</button>
         </div>
 
-        <h1>📘 中文科識字通 (V6.0 最終完美版)</h1>
+        <h1>📘 中文科識字通 (V7.0 最終完結篇)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -491,7 +490,6 @@
                 const row = document.createElement('div');
                 row.className = 'print-row';
                 
-                // 第一行：左邊大字 + 右邊田字格
                 const mainLine = document.createElement('div');
                 mainLine.className = 'print-main-line';
                 
@@ -525,7 +523,6 @@
                 mainLine.appendChild(gridContainer);
                 row.appendChild(mainLine);
 
-                // 第二行：筆畫拆解 (工整版)
                 const breakdownArea = document.createElement('div');
                 breakdownArea.className = 'print-breakdown-area';
                 
