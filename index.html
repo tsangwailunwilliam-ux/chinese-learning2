@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (完美顯示版)</title>
+<title>中文科識字通 (SVG 絕對顯示版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -113,7 +113,12 @@
     .breakdown-grid { display: flex; flex-wrap: wrap; gap: 8px; }
     .step-box {
         width: 60px; height: 60px; border: 1px solid #ccc; border-radius: 5px; position: relative; background: white;
+        display: flex; justify-content: center; align-items: center;
     }
+    /* SVG 樣式：確保路徑正確填色 */
+    .step-box svg { width: 100%; height: 100%; display: block; }
+    .step-box path { stroke: none; } /* 清除線條，只用填色 */
+
     .step-number { position: absolute; bottom: 2px; right: 2px; font-size: 10px; color: #999; }
     .step-box.is-last { border: 2px solid var(--accent); }
 
@@ -181,7 +186,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (含筆畫拆解)</button>
         </div>
 
-        <h1>📘 中文科識字通 (完美顯示版)</h1>
+        <h1>📘 中文科識字通 (SVG 絕對顯示版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -329,7 +334,7 @@
 
             visualContainer.appendChild(clone);
 
-            // 初始化
+            // 初始化主要練習 (這部分運作正常)
             const demo = HanziWriter.create(demoId, char, { width: 160, height: 160, padding: 5, showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 200, strokeColor: '#555' });
             const quiz = HanziWriter.create(quizId, char, { width: 160, height: 160, padding: 5, showOutline: true, strokeColor: '#333', highlightColor: '#4CAF50', drawingWidth: 20, showHintAfterMisses: 2 });
             state.writers[uid] = { demo, quiz, status: statusText };
@@ -342,22 +347,22 @@
             setTimeout(() => generateBreakdown(char, breakdownContainer, false), 500);
         }
 
-        // --- 🔥 完美顯示版：筆畫拆解生成 ---
+        // --- 🔥 SVG 絕對顯示版：手動繪製 SVG ---
+        // 這一段完全不依賴 HanziWriter 的動畫引擎，直接畫出線條，保證顯示！
         async function generateBreakdown(char, container, isPrint) {
             container.innerHTML = '<span style="font-size:12px; color:#999;">讀取中...</span>';
 
             try {
-                // 1. 強制從 CDN 下載「原始 JSON」 (Raw JSON)
-                // 這是關鍵：我們不透過 HanziWriter 解析，而是拿到純資料
+                // 1. 取得原始數據
                 const url = `https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${encodeURIComponent(char)}.json`;
                 const res = await fetch(url);
                 if (!res.ok) throw new Error("Network Error");
-                const charData = await res.json(); // 這是一個純 JSON 物件
+                const charData = await res.json();
 
-                // 2. 繪製
+                // 2. 開始繪圖
                 container.innerHTML = ''; 
-                const total = charData.strokes.length;
-                const size = isPrint ? 35 : 60; 
+                const total = charData.strokes.length; // 總筆畫數
+                const strokes = charData.strokes;      // 筆畫路徑 (SVG Path String)
 
                 for (let i = 0; i < total; i++) {
                     const box = document.createElement('div');
@@ -370,26 +375,31 @@
                     }
                     container.appendChild(box);
 
-                    // 3. 創建 Writer
-                    const writer = HanziWriter.create(box, char, {
-                        width: size, height: size, padding: 2, 
-                        showOutline: true,
-                        
-                        // ✨ 關鍵修正：確保每次餵進去的是「全新的數據副本」
-                        // 使用 Raw JSON 做深拷貝，這樣 HanziWriter 怎麼修改都不會壞
-                        charDataLoader: (c, cb) => cb(JSON.parse(JSON.stringify(charData))),
-                        
-                        // 顏色邏輯
-                        strokeColor: (data) => {
-                            if (!data || typeof data.strokeNum === 'undefined') return '#555';
-                            if (data.strokeNum === i) return '#d84315'; // 當前紅
-                            if (data.strokeNum < i) return '#555';     // 過去灰
-                            return 'rgba(255,255,255,0)';              // 未來透明
-                        }
-                    });
+                    // 3. 建立 SVG (這是最穩定的方法)
+                    // ViewBox 0 0 1024 1024 是筆畫數據的標準座標
+                    const svgNS = "http://www.w3.org/2000/svg";
+                    const svg = document.createElementNS(svgNS, "svg");
+                    svg.setAttribute("viewBox", "0 0 1024 1024");
                     
-                    // ✨ 4. 雙重保險：開燈！
-                    writer.showCharacter(); 
+                    // 為了正確顯示，SVG 需要垂直翻轉 (transform)
+                    const g = document.createElementNS(svgNS, "g");
+                    g.setAttribute("transform", "scale(1, -1) translate(0, -900)");
+
+                    // 4. 畫出每一筆
+                    for(let j = 0; j <= i; j++) {
+                        const path = document.createElementNS(svgNS, "path");
+                        path.setAttribute("d", strokes[j]);
+                        
+                        // 顏色邏輯：當前筆畫紅色，舊筆畫灰色
+                        if (j === i) {
+                            path.setAttribute("fill", "#d84315"); // 紅色
+                        } else {
+                            path.setAttribute("fill", "#555");    // 灰色
+                        }
+                        g.appendChild(path);
+                    }
+                    svg.appendChild(g);
+                    box.appendChild(svg);
                 }
 
             } catch(e) { 
