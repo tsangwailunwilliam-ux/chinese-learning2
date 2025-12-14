@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (終極修復版 3.0)</title>
+<title>中文科識字通 (完美顯示版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -181,7 +181,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (含筆畫拆解)</button>
         </div>
 
-        <h1>📘 中文科識字通 (終極修復版 3.0)</h1>
+        <h1>📘 中文科識字通 (完美顯示版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -342,17 +342,17 @@
             setTimeout(() => generateBreakdown(char, breakdownContainer, false), 500);
         }
 
-        // --- 🔥 終極修正版：筆畫拆解生成 ---
+        // --- 🔥 完美顯示版：筆畫拆解生成 ---
         async function generateBreakdown(char, container, isPrint) {
             container.innerHTML = '<span style="font-size:12px; color:#999;">讀取中...</span>';
 
             try {
-                // 1. 強制從 CDN 下載數據 (確保連線)
-                // 使用 encodeURIComponent 確保 "學" 這種字不會變成亂碼
+                // 1. 強制從 CDN 下載「原始 JSON」 (Raw JSON)
+                // 這是關鍵：我們不透過 HanziWriter 解析，而是拿到純資料
                 const url = `https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${encodeURIComponent(char)}.json`;
                 const res = await fetch(url);
                 if (!res.ok) throw new Error("Network Error");
-                const charData = await res.json();
+                const charData = await res.json(); // 這是一個純 JSON 物件
 
                 // 2. 繪製
                 container.innerHTML = ''; 
@@ -373,14 +373,13 @@
                     // 3. 創建 Writer
                     const writer = HanziWriter.create(box, char, {
                         width: size, height: size, padding: 2, 
-                        showOutline: true, // 顯示灰色底稿
+                        showOutline: true,
                         
-                        // ✨ 關鍵修正：深拷貝數據 (Deep Clone)
-                        // 使用 JSON.parse(JSON.stringify(charData)) 
-                        // 這能確保每個格子拿到的是「全新的影印本」，不會被前面的格子修改弄壞！
+                        // ✨ 關鍵修正：確保每次餵進去的是「全新的數據副本」
+                        // 使用 Raw JSON 做深拷貝，這樣 HanziWriter 怎麼修改都不會壞
                         charDataLoader: (c, cb) => cb(JSON.parse(JSON.stringify(charData))),
                         
-                        // 顏色邏輯：未來筆畫設為透明
+                        // 顏色邏輯
                         strokeColor: (data) => {
                             if (!data || typeof data.strokeNum === 'undefined') return '#555';
                             if (data.strokeNum === i) return '#d84315'; // 當前紅
