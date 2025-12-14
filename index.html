@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (完整修復版)</title>
+<title>中文科識字通 (最終修復版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -181,7 +181,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (含筆畫拆解)</button>
         </div>
 
-        <h1>📘 中文科識字通 (Github 完美版)</h1>
+        <h1>📘 中文科識字通 (最終修復版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -349,17 +349,14 @@
             try {
                 let charData = null;
 
-                // 策略 A: 先建立一個隱形的 Writer (這是你網站已經成功的機制)
-                // 我們利用它來抓資料，保證不會有編碼或路徑錯誤
+                // 策略 A: 先建立一個隱形的 Writer
                 try {
                     const tempDiv = document.createElement('div');
-                    // 建立一個臨時 Writer
                     const tempWriter = HanziWriter.create(tempDiv, char, { width: 10, height: 10 });
-                    // 等待資料載入完成
                     charData = await tempWriter.getCharacterData();
                 } catch (e) {
-                    // 策略 B: 萬一失敗，使用手動下載 (加上編碼保護)
                     console.log('策略A失敗，轉用策略B');
+                    // 策略 B: 備用下載
                     const url = `https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${encodeURIComponent(char)}.json`;
                     const res = await fetch(url);
                     if(!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -382,18 +379,26 @@
                     }
                     container.appendChild(box);
 
+                    // ✨ 這裡修正了：不再呼叫不存在的 showStroke
+                    // 而是利用 strokeColor callback 來控制透明度
                     const writer = HanziWriter.create(box, char, {
                         width: size, height: size, padding: 2, showOutline: true,
-                        // ✨ 關鍵：直接餵入剛才成功下載的資料
+                        // 使用成功獲取的數據
                         charDataLoader: (c, cb) => cb(charData),
-                        strokeColor: (data) => (data.strokeNum === i) ? '#d84315' : '#555'
+                        // 顏色邏輯：當前筆畫(i)紅色，過去筆畫(<i)灰色，未來筆畫(>i)透明
+                        strokeColor: (data) => {
+                            if(data.strokeNum === i) return '#d84315';
+                            if(data.strokeNum < i) return '#555';
+                            return 'rgba(0,0,0,0)'; // 透明
+                        },
+                        radicalColor: null // 避免部首顏色干擾
                     });
-                    writer.hideCharacter();
-                    for(let j=0; j<=i; j++) writer.showStroke(j);
+                    
+                    // 不需要 hideCharacter 或 loop showStroke
+                    // 因為我們已經在 create 的時候用 strokeColor 設定好可見度了
                 }
 
             } catch(e) { 
-                // 顯示精確錯誤代碼
                 console.error(e);
                 container.innerHTML = `<span style="font-size:12px; color:red;">❌ 錯誤: ${e.message}</span>`; 
             }
