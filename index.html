@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (最終完美版)</title>
+<title>中文科識字通 (完整修復版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -23,7 +23,6 @@
         --grid-size: 160px;
     }
 
-    /* ================= 螢幕顯示樣式 ================= */
     body {
         font-family: "微軟正黑體", sans-serif;
         background-color: var(--bg-body);
@@ -83,7 +82,6 @@
         padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-left: 10px;
     }
 
-    /* 內容區 */
     .word-main-flex { display: flex; gap: 40px; flex-wrap: wrap; }
     .word-visual-left { flex: 2; min-width: 350px; }
     .word-info-right { flex: 1; min-width: 250px; background: #fff8e1; padding: 20px; border-radius: var(--radius-box); }
@@ -101,7 +99,6 @@
         border-left: 4px solid var(--primary); padding-left: 8px;
     }
 
-    /* 田字格 */
     .grid-box {
         width: var(--grid-size); height: var(--grid-size);
         border: 3px solid var(--primary); background-color: white;
@@ -109,7 +106,7 @@
         background-size: cover; position: relative; margin-bottom: 10px;
     }
 
-    /* 螢幕上的拆解圖 */
+    /* 拆解圖樣式 */
     .breakdown-section {
         background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-top: 15px;
     }
@@ -127,7 +124,7 @@
         color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: bold;
     }
 
-    /* ================= Modal (部首彈出視窗) ================= */
+    /* Modal */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.5); z-index: 200; display: none;
@@ -145,23 +142,20 @@
         display: flex; align-items: center; justify-content: center; cursor: pointer;
         background: #fff3e0; border-radius: 10px; font-family: "標楷體";
     }
-    .radical-char-btn:hover { background: #ffe0b2; transform: scale(1.1); }
 
-    /* ================= 列印專用樣式 (Print CSS) ================= */
-    #print-container { display: none; } /* 螢幕上隱藏 */
-
+    /* 列印樣式 */
+    #print-container { display: none; }
     @media print {
         @page { size: A4; margin: 10mm; }
         body { background: white; -webkit-print-color-adjust: exact; padding: 0; }
-        #screen-ui, .toolbar, .modal-overlay { display: none !important; } /* 隱藏螢幕介面 */
-        #print-container { display: block !important; } /* 顯示列印介面 */
+        #screen-ui, .toolbar, .modal-overlay { display: none !important; }
+        #print-container { display: block !important; }
         
-        /* 列印排版 */
         .print-page-header { text-align: center; border-bottom: 2px solid black; margin-bottom: 20px; padding-bottom: 10px; }
         .print-row {
             display: flex; flex-direction: column; margin-bottom: 25px; 
             border-bottom: 1px dashed #ccc; padding-bottom: 15px;
-            page-break-inside: avoid; /* 避免一個字被切兩頁 */
+            page-break-inside: avoid;
         }
         .print-main-line { display: flex; align-items: center; margin-bottom: 10px; }
         .print-info-col { width: 80px; text-align: center; border-right: 2px solid #000; margin-right: 15px; }
@@ -174,7 +168,6 @@
             background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc3MCcgaGVpZ2h0PSc3MCc+CiAgPGxpbmUgeDE9JzM1JyB5MT0nMCcgeDI9JzM1JyB5Mj0nNzAnIHN0cm9rZT0nI2NjYycgc3Ryb2tlLXdpZHRoPScwLjUnIHN0cm9rZS1kYXNoYXJyYXk9JzMsMycvPgogIDxsaW5lIHgxPScwJyB5MT0nMzUnIHgyPSc3MCcgeTI9JzM1JyBzdHJva2U9JyNjY2MnIHN0cm9rZS13aWR0aD0nMC41JyBzdHJva2UtZGFzaGFycmF5PSczLDMnLz4KPC9zdmc+");
         }
         
-        /* 列印版拆解圖 */
         .print-breakdown-row { display: flex; flex-wrap: wrap; gap: 5px; margin-left: 95px; margin-top: 5px; }
         .print-step-box { width: 35px; height: 35px; border: 1px solid #ccc; position: relative; }
         .print-label { font-size: 12px; font-weight: bold; margin-left: 95px; color: #555; }
@@ -188,7 +181,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (含筆畫拆解)</button>
         </div>
 
-        <h1>📘 中文科識字通 (最終完美版)</h1>
+        <h1>📘 中文科識字通 (Github 完美版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -306,7 +299,7 @@
             }
         }
 
-        // --- 建立卡片 DOM ---
+        // --- DOM 工具 ---
         function createCardElement(word) {
             const template = document.getElementById('card-template');
             const clone = template.content.cloneNode(true);
@@ -317,7 +310,6 @@
             return clone.children[0];
         }
 
-        // --- 設定單字視覺 (含螢幕拆解) ---
         function setupCharacterVisuals(char, cardElement) {
             const visualContainer = cardElement.querySelector('.js-visual-container');
             const template = document.getElementById('char-block-template');
@@ -337,44 +329,51 @@
 
             visualContainer.appendChild(clone);
 
-            // 初始化 Writer
+            // 初始化
             const demo = HanziWriter.create(demoId, char, { width: 160, height: 160, padding: 5, showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 200, strokeColor: '#555' });
             const quiz = HanziWriter.create(quizId, char, { width: 160, height: 160, padding: 5, showOutline: true, strokeColor: '#333', highlightColor: '#4CAF50', drawingWidth: 20, showHintAfterMisses: 2 });
-            
             state.writers[uid] = { demo, quiz, status: statusText };
 
             startQuizLoop(uid);
             playBtn.onclick = () => demo.animateCharacter();
             resetBtn.onclick = () => resetQuiz(uid);
 
-            // 生成螢幕用筆畫拆解
+            // 啟動拆解圖
             setTimeout(() => generateBreakdown(char, breakdownContainer, false), 500);
         }
 
-        // --- 最終修正版：筆畫拆解生成 (重複利用數據，防止連線過多被擋) ---
+        // --- 🔥 終極修正版：筆畫拆解生成 ---
         async function generateBreakdown(char, container, isPrint) {
-            container.innerHTML = '<span style="font-size:12px; color:#999;">數據讀取中...</span>';
+            container.innerHTML = '<span style="font-size:12px; color:#999;">讀取中...</span>';
 
             try {
-                // 1. 核心修正：只下載一次數據，然後重複使用
                 let charData = null;
+
+                // 策略 A: 先建立一個隱形的 Writer (這是你網站已經成功的機制)
+                // 我們利用它來抓資料，保證不會有編碼或路徑錯誤
                 try {
-                    // 嘗試從官方下載
-                    charData = await HanziWriter.loadCharacterData(char);
-                } catch (err) {
-                    console.warn("官方下載失敗，嘗試備用源:", err);
-                    throw err; // 讓外層 catch 處理
+                    const tempDiv = document.createElement('div');
+                    // 建立一個臨時 Writer
+                    const tempWriter = HanziWriter.create(tempDiv, char, { width: 10, height: 10 });
+                    // 等待資料載入完成
+                    charData = await tempWriter.getCharacterData();
+                } catch (e) {
+                    // 策略 B: 萬一失敗，使用手動下載 (加上編碼保護)
+                    console.log('策略A失敗，轉用策略B');
+                    const url = `https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${encodeURIComponent(char)}.json`;
+                    const res = await fetch(url);
+                    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+                    charData = await res.json();
                 }
 
-                // 2. 開始繪製
-                container.innerHTML = ''; // 清空讀取訊息
+                // 繪製
+                container.innerHTML = ''; 
                 const total = charData.strokes.length;
                 const size = isPrint ? 35 : 60; 
 
                 for (let i = 0; i < total; i++) {
                     const box = document.createElement('div');
                     box.className = isPrint ? 'print-step-box' : (i === total - 1 ? 'step-box is-last' : 'step-box');
-                    
                     if(!isPrint) {
                         const num = document.createElement('span');
                         num.className = 'step-number';
@@ -383,29 +382,23 @@
                     }
                     container.appendChild(box);
 
-                    // 3. 建立 Writer，並使用 charDataLoader 重複利用數據
                     const writer = HanziWriter.create(box, char, {
-                        width: size, 
-                        height: size, 
-                        padding: 2,
-                        showOutline: true,
-                        // ✨ 關鍵修正：直接餵入數據，不讓它自己去網路抓
-                        charDataLoader: (c, onComplete) => onComplete(charData),
+                        width: size, height: size, padding: 2, showOutline: true,
+                        // ✨ 關鍵：直接餵入剛才成功下載的資料
+                        charDataLoader: (c, cb) => cb(charData),
                         strokeColor: (data) => (data.strokeNum === i) ? '#d84315' : '#555'
                     });
-
-                    // 隱藏所有，然後依序顯示到當前筆畫
                     writer.hideCharacter();
                     for(let j=0; j<=i; j++) writer.showStroke(j);
                 }
 
             } catch(e) { 
+                // 顯示精確錯誤代碼
                 console.error(e);
-                container.innerHTML = `<span style="font-size:12px; color:red;">❌ 無法載入 (請確認網路或字庫)</span>`; 
+                container.innerHTML = `<span style="font-size:12px; color:red;">❌ 錯誤: ${e.message}</span>`; 
             }
         }
 
-        // --- 設定資訊與部首 Modal ---
         function setupCharacterInfo(char, cardElement) {
             const infoContainer = cardElement.querySelector('.js-info-container');
             const pinyin = cnchar.spell(char, 'tone');
@@ -426,7 +419,6 @@
             infoContainer.appendChild(div);
         }
 
-        // --- 測驗邏輯 ---
         function startQuizLoop(uid) {
             const w = state.writers[uid];
             w.status.innerText = "請寫字"; w.status.style.color = "#d84315";
@@ -438,25 +430,19 @@
         }
         function resetQuiz(uid) { startQuizLoop(uid); }
 
-        // --- 部首 Modal 邏輯 ---
         function openRadicalModal(radical) {
             if(!radical || radical === '無') return;
             document.getElementById('modal-radical-title').innerText = radical;
             const grid = document.getElementById('modal-grid');
             grid.innerHTML = '';
-            
             const matches = HK_COMMON_CHARS.split('').filter(c => {
                 try { return cnchar.radical(c)[0].radical === radical; } catch { return false; }
             }).slice(0, 16);
-
             matches.forEach(c => {
                 const btn = document.createElement('div');
                 btn.className = 'radical-char-btn';
                 btn.innerText = c;
-                btn.onclick = () => { 
-                    document.getElementById('input-text').value += c; 
-                    closeRadicalModal(null, true);
-                };
+                btn.onclick = () => { document.getElementById('input-text').value += c; closeRadicalModal(null, true); };
                 grid.appendChild(btn);
             });
             document.getElementById('radical-modal').classList.add('open');
@@ -465,15 +451,13 @@
             if (force || e.target.id === 'radical-modal') document.getElementById('radical-modal').classList.remove('open');
         }
 
-        // --- 列印功能 (含筆畫拆解) ---
         async function autoPrint() {
             const input = document.getElementById('input-text').value.trim();
             if (!input) { alert("請先輸入文字"); return; }
             
             const printContent = document.getElementById('print-content');
-            printContent.innerHTML = ''; // 清空舊的
+            printContent.innerHTML = ''; 
             
-            // 找出所有漢字
             const chars = input.split('').filter(c => /[\u4e00-\u9fa5]/.test(c));
             
             for (const char of chars) {
@@ -481,7 +465,6 @@
                 const row = document.createElement('div');
                 row.className = 'print-row';
                 
-                // 第一行：大字 + 田字格
                 const mainLine = document.createElement('div');
                 mainLine.className = 'print-main-line';
                 mainLine.innerHTML = `
@@ -495,37 +478,26 @@
                     </div>
                 `;
                 
-                // 第二行：筆畫拆解
                 const label = document.createElement('div');
                 label.className = 'print-label';
                 label.innerText = '筆畫拆解：';
-                
                 const breakdownRow = document.createElement('div');
                 breakdownRow.className = 'print-breakdown-row';
                 breakdownRow.innerText = '載入中...';
                 
-                row.appendChild(mainLine);
-                row.appendChild(label);
-                row.appendChild(breakdownRow);
+                row.appendChild(mainLine); row.appendChild(label); row.appendChild(breakdownRow);
                 printContent.appendChild(row);
 
-                // 畫大字 (Demo)
                 HanziWriter.create(`p-demo-${uid}`, char, { width: 70, height: 70, showOutline: true, strokeColor: '#000' });
-
-                // 畫拆解圖 (Await 確保列印前畫好)
                 await generateBreakdown(char, breakdownRow, true);
             }
-
-            // 等待一下確保渲染完成
             setTimeout(() => { window.print(); }, 1000);
         }
 
-        // --- 工具 ---
         function speakText(text, lang) {
             window.speechSynthesis.cancel();
             const u = new SpeechSynthesisUtterance(text);
-            u.lang = lang; 
-            window.speechSynthesis.speak(u);
+            u.lang = lang; window.speechSynthesis.speak(u);
         }
         
         async function updateDefinition(word, cardElement) {
@@ -538,7 +510,7 @@
                     if(data.h) data.h.forEach(h => { if(h.d) h.d.forEach(d => { if(d.f) defs.push(d.f.replace(/[~`\[\]]/g,"")); })});
                     defEl.textContent = defs.length ? defs.map((d,i)=>`${i+1}. ${d}`).join('\n') : "無詳細解釋";
                 } else { defEl.textContent = "查無資料"; }
-            } catch { defEl.textContent = "無資料或連線問題"; }
+            } catch { defEl.textContent = "無資料"; }
         }
     </script>
 </body>
