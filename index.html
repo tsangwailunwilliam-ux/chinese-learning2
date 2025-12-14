@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (全功能旗艦版)</title>
+<title>中文科識字通 (GitHub修正版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -188,7 +188,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (含筆畫拆解)</button>
         </div>
 
-        <h1>📘 中文科識字通 (全功能旗艦版)</h1>
+        <h1>📘 中文科識字通 (GitHub修正版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -256,7 +256,7 @@
             <div class="breakdown-section">
                 <div class="visual-label" style="border-color: var(--accent);">🔢 筆畫拆解 (紅色為當前筆畫)</div>
                 <div class="breakdown-grid js-breakdown-target">
-                    <span style="color:#aaa; font-size:12px;">若為 file:// 模式可能無法載入，請上傳至伺服器。</span>
+                    <span style="color:#aaa; font-size:12px;">讀取中...</span>
                 </div>
             </div>
         </div>
@@ -351,10 +351,16 @@
             setTimeout(() => generateBreakdown(char, breakdownContainer, false), 500);
         }
 
-        // --- 通用筆畫拆解生成 (螢幕 + 列印) ---
+        // --- 修正後的筆畫拆解生成 (使用 Fetch 直接連線) ---
         async function generateBreakdown(char, container, isPrint) {
             try {
-                const charData = await HanziWriter.loadCharacterData(char);
+                // 1. 修正：手動 Fetch 資料，確保路徑正確
+                const url = `https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${char}.json`;
+                const res = await fetch(url);
+                if(!res.ok) throw new Error("資料庫無此字");
+                const charData = await res.json();
+                
+                // 2. 正常生成邏輯
                 container.innerHTML = '';
                 const total = charData.strokes.length;
                 const size = isPrint ? 35 : 60; // 列印版較小
@@ -368,7 +374,9 @@
                     const writer = HanziWriter.create(box, char, {
                         width: size, height: size, padding: 2,
                         showOutline: true,
-                        strokeColor: (data) => (data.strokeNum === i) ? '#d84315' : '#555' // 紅色當前筆畫
+                        // 修正：確保小格子也使用正確的資料載入方式
+                        charDataLoader: (char, onComplete) => onComplete(charData),
+                        strokeColor: (data) => (data.strokeNum === i) ? '#d84315' : '#555'
                     });
 
                     writer.hideCharacter();
@@ -376,7 +384,7 @@
                 }
             } catch(e) { 
                 console.log(e);
-                container.innerHTML = '<span style="font-size:12px; color:red">無法載入(請上傳至伺服器)</span>'; 
+                container.innerHTML = '<span style="font-size:12px; color:red">載入失敗 (資料庫無此字)</span>'; 
             }
         }
 
