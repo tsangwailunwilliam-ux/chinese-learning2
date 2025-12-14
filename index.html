@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (V9.0 課堂總結版)</title>
+<title>中文科識字通 (V9.1 完美解釋版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -48,7 +48,6 @@
     }
     .tool-btn:hover { background: var(--primary-bg); transform: translateY(-2px); }
     
-    /* 全覽模式激活時的按鈕樣式 */
     .tool-btn.active-mode {
         background: var(--primary); color: white; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
     }
@@ -144,6 +143,15 @@
         color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: bold;
     }
 
+    /* 🔥 修正：解釋文字樣式 */
+    .js-def-text {
+        white-space: pre-wrap; /* 關鍵：讓換行符號生效 */
+        line-height: 1.8;      /* 增加行高，閱讀更舒適 */
+        text-align: left;
+        color: #444;
+        font-size: 18px;
+    }
+
     /* Modal */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -169,21 +177,15 @@
     }
     
     body.overview-mode .word-group-wrapper {
-        width: 45%; /* 卡片並排 */
+        width: 45%; 
         min-width: 300px;
         margin: 10px;
-        border-top: 8px solid var(--primary); /* 加強頂部識別 */
+        border-top: 8px solid var(--primary); 
     }
 
-    /* 隱藏視覺演示、學生練習、資訊欄 */
-    body.overview-mode .word-main-flex {
-        display: none !important;
-    }
+    body.overview-mode .word-main-flex { display: none !important; }
 
-    /* 只顯示標題和解釋 */
-    body.overview-mode .word-group-header {
-        border-bottom: none; margin-bottom: 5px;
-    }
+    body.overview-mode .word-group-header { border-bottom: none; margin-bottom: 5px; }
     
     body.overview-mode .word-definition-footer {
         border-top: 1px solid #eee; padding-top: 15px; margin-top: 0;
@@ -244,7 +246,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (詞語合併)</button>
         </div>
 
-        <h1>📘 中文科識字通 (V9.0 課堂總結版)</h1>
+        <h1>📘 中文科識字通 (V9.1 完美解釋版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -289,7 +291,7 @@
             </div>
             <div class="word-definition-footer" style="margin-top:20px; border-top:1px dashed #ccc; padding-top:10px;">
                 <div style="font-weight:bold; color:var(--success)">📖 解釋</div>
-                <div class="js-def-text" style="line-height:1.6"></div>
+                <div class="js-def-text"></div>
             </div>
         </div>
     </template>
@@ -324,7 +326,6 @@
         
         const state = { writers: {} };
 
-        // --- 功能：切換全覽模式 ---
         function toggleOverviewMode() {
             document.body.classList.toggle('overview-mode');
             const btn = document.getElementById('btn-overview');
@@ -333,7 +334,6 @@
             btn.classList.toggle('active-mode', isOverview);
         }
 
-        // --- 主程式 ---
         async function generateCards() {
             const input = document.getElementById('input-text').value.trim();
             const container = document.getElementById('characters-container');
@@ -371,7 +371,6 @@
             }
         }
 
-        // --- DOM 工具 ---
         function createCardElement(word) {
             const template = document.getElementById('card-template');
             const clone = template.content.cloneNode(true);
@@ -401,7 +400,6 @@
 
             visualContainer.appendChild(clone);
 
-            // 🔥 配合 CSS 加大尺寸
             const width = window.innerWidth > 768 ? 260 : 160;
 
             const demo = HanziWriter.create(demoId, char, { width: width, height: width, padding: 5, showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 200, strokeColor: '#555' });
@@ -415,7 +413,6 @@
             setTimeout(() => generateBreakdown(char, breakdownContainer, false), 500);
         }
 
-        // --- SVG 絕對顯示版：手動繪製 SVG ---
         async function generateBreakdown(char, container, isPrint) {
             if(!isPrint) container.innerHTML = '<span style="font-size:12px; color:#999;">讀取中...</span>';
 
@@ -504,15 +501,11 @@
             const grid = document.getElementById('modal-grid');
             grid.innerHTML = '';
             
-            // 🔥 1. 從擴充後的字庫中尋找
             const matches = HK_COMMON_CHARS.split('').filter(c => {
                 try { return cnchar.radical(c)[0].radical === radical; } catch { return false; }
             });
-
-            // 🔥 2. 使用 Set 去除重複
             const uniqueMatches = [...new Set(matches)];
 
-            // 🔥 3. 顯示
             uniqueMatches.slice(0, 32).forEach(c => {
                 const btn = document.createElement('div');
                 btn.className = 'radical-char-btn';
@@ -526,7 +519,6 @@
             if (force || e.target.id === 'radical-modal') document.getElementById('radical-modal').classList.remove('open');
         }
 
-        // --- 列印邏輯 ---
         async function autoPrint() {
             const input = document.getElementById('input-text').value.trim();
             if (!input) { alert("請先輸入文字"); return; }
@@ -619,6 +611,8 @@
                     const data = await res.json();
                     let defs = [];
                     if(data.h) data.h.forEach(h => { if(h.d) h.d.forEach(d => { if(d.f) defs.push(d.f.replace(/[~`\[\]]/g,"")); })});
+                    
+                    // 🔥 修正：使用 join('\n') 並配合 CSS white-space 實現換行
                     defEl.textContent = defs.length ? defs.map((d,i)=>`${i+1}. ${d}`).join('\n') : "無詳細解釋";
                 } else { defEl.textContent = "查無資料"; }
             } catch { defEl.textContent = "無資料"; }
