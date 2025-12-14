@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (V7.0 最終完結篇)</title>
+<title>中文科識字通 (V8.0 MAX 顯示版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -20,7 +20,8 @@
         --bg-body: #f4f7f6;
         --bg-white: #ffffff;
         --radius-box: 20px;
-        --grid-size: 160px;
+        /* 🔥 修正：加大基礎尺寸到 260px */
+        --grid-size: 260px;
     }
 
     body {
@@ -66,7 +67,8 @@
     #characters-container { display: flex; flex-direction: column; align-items: center; gap: 40px; }
     
     .word-group-wrapper {
-        background: var(--bg-white); width: 95%; max-width: 1200px; padding: 30px;
+        background: var(--bg-white); width: 95%; max-width: 1400px; /* 加寬容器以容納大字 */
+        padding: 30px;
         border-radius: var(--radius-box); box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         text-align: left; animation: fadeInUp 0.5s ease-out;
     }
@@ -83,7 +85,9 @@
     }
 
     .word-main-flex { display: flex; gap: 40px; flex-wrap: wrap; }
-    .word-visual-left { flex: 2; min-width: 350px; }
+    
+    /* 調整左右比例，給左邊演示區更多空間 */
+    .word-visual-left { flex: 3; min-width: 350px; }
     .word-info-right { flex: 1; min-width: 250px; background: #fff8e1; padding: 20px; border-radius: var(--radius-box); }
 
     /* 單字區塊 */
@@ -91,23 +95,29 @@
         background: #f8f9fa; border-radius: 15px; padding: 20px; margin-bottom: 20px;
         border: 1px solid #eee;
     }
-    .char-main-row { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+    .char-main-row { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
     .char-block-item { display: flex; flex-direction: column; align-items: center; }
     
     .visual-label {
-        font-weight: bold; color: #555; margin-bottom: 8px; width: 100%;
-        border-left: 4px solid var(--primary); padding-left: 8px;
+        font-size: 20px; /* 標題也放大一點 */
+        font-weight: bold; color: #555; margin-bottom: 15px; width: 100%;
+        border-left: 6px solid var(--primary); padding-left: 10px;
     }
 
-    /* 🔥 修正 1：螢幕版「田字格」 (紅色虛線) */
+    /* 🔥 修正：螢幕版「MAX 田字格」 (紅色虛線) */
     .grid-box {
         width: var(--grid-size); height: var(--grid-size);
-        border: 3px solid var(--primary); 
+        border: 4px solid var(--primary); /* 邊框加粗 */
         background-color: white;
-        /* 使用清晰的紅色虛線 SVG */
         background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxsaW5lIHgxPSI1MCUiIHkxPSIwIiB4Mj0iNTAlIiB5Mj0iMTAwJSIgc3Ryb2tlPSIjZmZjY2NjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjgsOCIvPjxsaW5lIHgxPSIwIiB5MT0iNTAlIiB4Mj0iMTAwJSIgeTI9IjUwJSIgc3Ryb2tlPSIjZmZjY2NjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjgsOCIvPjwvc3ZnPg==");
         background-size: 100% 100%;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* 增加陰影讓它跳出來 */
+    }
+
+    /* RWD: 手機上自動縮小 */
+    @media (max-width: 768px) {
+        :root { --grid-size: 160px; } /* 手機保持原大小 */
     }
 
     /* 拆解圖樣式 */
@@ -209,7 +219,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (詞語合併)</button>
         </div>
 
-        <h1>📘 中文科識字通 (V7.0 最終完結篇)</h1>
+        <h1>📘 中文科識字通 (V8.0 MAX 顯示版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -357,8 +367,11 @@
 
             visualContainer.appendChild(clone);
 
-            const demo = HanziWriter.create(demoId, char, { width: 160, height: 160, padding: 5, showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 200, strokeColor: '#555' });
-            const quiz = HanziWriter.create(quizId, char, { width: 160, height: 160, padding: 5, showOutline: true, strokeColor: '#333', highlightColor: '#4CAF50', drawingWidth: 20, showHintAfterMisses: 2 });
+            // 🔥 修正：JS 初始化也配合加大尺寸
+            const width = window.innerWidth > 768 ? 260 : 160;
+
+            const demo = HanziWriter.create(demoId, char, { width: width, height: width, padding: 5, showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 200, strokeColor: '#555' });
+            const quiz = HanziWriter.create(quizId, char, { width: width, height: width, padding: 5, showOutline: true, strokeColor: '#333', highlightColor: '#4CAF50', drawingWidth: 20, showHintAfterMisses: 2 });
             state.writers[uid] = { demo, quiz, status: statusText };
 
             startQuizLoop(uid);
