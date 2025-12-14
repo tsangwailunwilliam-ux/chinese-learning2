@@ -3,10 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文識字通</title> <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+<title>中文識字通 (V15.0 互動教室版)</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar-trad/cnchar.trad.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar-radical/cnchar.radical.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
     :root {
@@ -54,6 +57,7 @@
         background: var(--bg-white); padding: 30px; border-radius: var(--radius-box);
         box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block;
         margin: 30px 0; border-top: 6px solid var(--primary);
+        position: relative;
     }
     input[type="text"] {
         font-size: 28px; padding: 10px; width: 300px;
@@ -65,6 +69,13 @@
         border-radius: 10px; cursor: pointer; box-shadow: 0 4px 0 #0d47a1;
     }
     button.main-btn:active { transform: translateY(4px); box-shadow: none; }
+
+    /* 🔥 QR Code 彈出視窗 */
+    #qrcode-container {
+        display: none; flex-direction: column; align-items: center; margin-top: 20px;
+        padding: 20px; background: #fff3e0; border-radius: 15px; border: 2px dashed #ffb74d;
+    }
+    #qrcode-canvas { margin: 15px 0; border: 5px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
     /* 卡片容器 */
     #characters-container { 
@@ -88,7 +99,6 @@
     .word-label-small { font-size: 20px; color: #666; font-weight: bold; margin-right: 5px; }
     .word-title { font-size: 56px; font-weight: bold; color: var(--primary); line-height: 1.2; }
     
-    /* 詞語級大標籤 */
     .word-pos-tag {
         font-size: 20px; padding: 6px 15px; border-radius: 20px;
         color: white; font-weight: bold; background-color: #607d8b;
@@ -168,14 +178,12 @@
         background: #fff3e0; border-radius: 10px; font-family: "標楷體";
     }
 
-    /* 全覽模式 */
     body.overview-mode #characters-container { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: stretch; }
     body.overview-mode .word-group-wrapper { width: 45%; min-width: 300px; margin: 10px; border-top: 8px solid var(--primary); }
     body.overview-mode .word-main-flex { display: none !important; }
     body.overview-mode .word-group-header { border-bottom: none; margin-bottom: 5px; }
     body.overview-mode .word-definition-footer { border-top: 1px solid #eee; padding-top: 15px; margin-top: 0; }
 
-    /* 列印樣式 */
     #print-container { display: none; }
     @media print {
         @page { size: A4; margin: 10mm; }
@@ -211,11 +219,21 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (詞語合併)</button>
         </div>
 
-        <h1>📘 中文識字通</h1> <div class="input-section">
+        <h1>📘 中文識字通</h1>
+
+        <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
             <input type="text" id="input-text" placeholder="例如：學校" value="學校">
             <button class="main-btn" onclick="generateCards()">🔍 開始練習</button>
+            <button class="main-btn" style="background-color: #ff9800; margin-left: 10px;" onclick="generateQRCode()">📲 生成學生 QR Code</button>
+            
             <div id="loading" style="display:none; margin-top:10px; color:#1976d2;">⏳ 資料處理中...</div>
+            
+            <div id="qrcode-container">
+                <span style="font-weight:bold; color:#d84315;">請學生掃描此 Code 即可直接練習：</span>
+                <div id="qrcode-canvas"></div>
+                <button class="tool-btn" onclick="document.getElementById('qrcode-container').style.display='none'" style="margin-top:10px;">關閉</button>
+            </div>
         </div>
 
         <div id="characters-container"></div>
@@ -292,14 +310,44 @@
         const HK_COMMON_CHARS = "一二三四五六七八九十百千萬日月水火木金土人口手足耳目心力刀弓戈虫貝車舟馬羊牛鳥魚肉雨風雲電田衣食住行父母兄弟姐妹男女老少大小高低長短多少前後左右內外上下東西南北春夏秋冬早晚午夜年月日時分秒今天明昨星期學校師生課書筆紙畫圖文數字詞句言語問答看聽說讀寫坐立走跑跳吃喝睡玩樂喜怒哀樂這那誰什麼裡邊家國城市村草花樹林果菜瓜豆米麵飯肉蛋奶油鹽糖茶杯盤碗筷刀叉匙桌椅床燈門窗牆地房店車船飛機公巴士的士地鐵站路橋江河海洋山谷石沙泥光暗冷熱快慢好壞真假對錯美麗乾淨整齊聰明勤勞勇敢友愛禮貌守規誠實健康快樂幫忙合作分享遊戲運動唱歌跳舞畫畫講故事做功課洗臉刷牙穿衣脫鞋收拾整理清潔掃地抹窗澆水種花飼養寵物狗貓兔雞鴨鵝豬牛羊身體頭頸肩背腰臀腿腳膝蓋顏面眼眉鼻口牙舌唇耳髮指甲皮膚顏色紅白黃綠藍紫黑灰橙啡天地人你我他她它們爸媽哥姐弟妹爺嫲公婆伯叔姨舅兒孫朋友鄰居同學老師校長醫生護士警察郵差司機店員廚師農夫漁夫工人文員歌手畫家運動員太空人愛好興趣唱歌跳舞畫畫看書游泳打球跑步踏單車旅行攝影烹飪種植飼養收集郵票錢幣模型玩具遊戲機電腦電視電影音樂卡通故事報紙雜誌字典地圖地球儀文具書包筆盒鉛筆原子筆擦膠尺子剪刀膠水膠紙畫筆顏料畫紙手工紙顏色紙皺紙練習簿手冊課本圖書圖書館課室禮堂操場小食部洗手間辦公室教員室醫療室音樂室視藝室電腦室活動室圖書角閱讀角壁報板報告板壁報桌子椅子黑板白板粉筆白板筆板擦布抹布掃把垃圾鏟垃圾桶回收箱花盆澆水壺飼料籠子魚缸水族箱公園遊樂場滑梯鞦韆蹺蹺板攀登架沙池單車徑緩跑徑涼亭長椅花槽草地樹木花朵小草昆蟲蝴蝶蜜蜂蜻蜓螞蟻蝸牛蚯蚓蜘蛛甲蟲青蛙蟾蜍烏龜蜥蜴壁虎蛇麻雀鴿子燕子老鷹貓頭鷹啄木鳥鸚鵡企鵝鴕鳥孔雀天鵝鴨子鵝雞火雞蝙蝠鯨魚海豚鯊魚海馬海星螃蟹龍蝦蝦子章魚魷魚水母珊瑚貝殼海螺珍珠金魚鯉魚熱帶魚獅子老虎豹大象長頸鹿斑馬犀牛河馬鱷魚熊貓樹熊袋鼠猴子猩猩松鼠老鼠兔子刺猬狐狸狼野豬駱駝馬驢騾羊鹿豬牛狗貓鼠倉鼠天竺鼠龍鳳麒麟怪獸恐龍神仙天使魔鬼妖怪幽靈殭屍吸血鬼巫婆巨人小矮人美人魚白雪公主灰姑娘睡公主小紅帽三隻小豬醜小鴨龜兔賽跑狼來了賣火柴的女孩國王王后王子公主宰相將軍士兵勇士獵人農夫樵夫漁夫商人小販乞丐強盜小偷騙子壞人好人英雄超人怪獸外星人機器人電腦手機電話電視收音機相機錄影機影印機傳真機打印機鍵盤滑鼠螢幕硬碟光碟隨身碟互聯網網站電郵短訊應用程式遊戲軟件硬件電池電線插頭插座開關掣燈泡光管電筒光纖衛星火箭飛船太空站太空衣望遠鏡顯微鏡放大鏡眼鏡隱形眼鏡太陽眼鏡助聽器輪椅拐杖義肢藥水膠布繃帶探熱針口罩消毒藥水洗手液肥皂沐浴露洗髮水牙膏牙刷毛巾浴巾手帕紙巾廁紙濕紙巾尿片奶粉奶瓶嬰兒車搖籃床單被單枕頭枕頭套棉被毛毯床褥衣櫃鞋櫃書櫃雜物架儲物箱衣架曬衣夾洗衣籃洗衣機乾衣機熨斗熨衣板吸塵機掃地機器人空氣清新機抽濕機冷氣機風扇暖爐熱水爐煮食爐微波爐焗爐多士爐電飯煲電熱水壺攪拌機榨汁機洗碗機雪櫃冰格垃圾袋保鮮紙錫紙廚房紙百潔布洗潔精掃把拖把水桶水喉水管花灑浴缸洗手盆馬桶鏡子梳子風筒指甲鉗化妝品香水首飾手錶項鍊手鍊耳環戒指眼鏡領帶皮帶錢包手袋背包公事包旅行箱雨傘雨衣雨靴太陽帽冷帽手套圍巾頸巾口罩泳衣泳褲泳鏡泳帽運動服運動鞋皮鞋涼鞋拖鞋高跟鞋靴子襪子內衣內褲睡衣校服制服西裝禮服婚紗旗袍和服韓服唐裝中山裝牛仔褲短褲長褲裙子連身裙外套大衣背心毛衣恤衫T恤";
         
         const state = { writers: {} };
-
-        // 🔥 強制字典 (Fallback Dictionary)
-        // 當 API 分析失敗時，優先使用這裡的資料
         const MANUAL_POS = {
             '學校': '名', '老師': '名', '學生': '名', '同學': '名', '課本': '名', '書包': '名',
             '跑步': '動', '游泳': '動', '唱歌': '動', '跳舞': '動',
             '美麗': '形', '快樂': '形', '乾淨': '形', '聰明': '形'
         };
+
+        // 🔥 初始化：檢查網址參數 (學生端邏輯)
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const q = params.get('q');
+            if(q) {
+                // 如果網址有 ?q=學校，自動填入並執行
+                document.getElementById('input-text').value = decodeURIComponent(q);
+                generateCards();
+            }
+        };
+
+        // 🔥 功能：生成 QR Code (老師端邏輯)
+        function generateQRCode() {
+            const input = document.getElementById('input-text').value.trim();
+            if (!input) { alert("請先輸入文字"); return; }
+
+            // 1. 產生學生端網址 (當前網址 + ?q=輸入字)
+            const currentUrl = window.location.href.split('?')[0];
+            const studentUrl = `${currentUrl}?q=${encodeURIComponent(input)}`;
+
+            // 2. 清空並繪製 QR
+            const container = document.getElementById('qrcode-canvas');
+            container.innerHTML = '';
+            new QRCode(container, {
+                text: studentUrl,
+                width: 256,
+                height: 256
+            });
+
+            // 3. 顯示視窗
+            document.getElementById('qrcode-container').style.display = 'flex';
+        }
 
         function toggleOverviewMode() {
             document.body.classList.toggle('overview-mode');
@@ -337,8 +385,6 @@
                         setupCharacterInfo(char, card);
                     }
                     updateDefinition(word, card);
-                    
-                    // 啟動詞性偵測
                     fetchWordPOS(word, card);
                 }
             } catch (err) {
@@ -495,34 +541,30 @@
             } catch(e) {}
         }
 
-        // --- 🔥 最終修正：詞語級詞性查詢 (強制字典 + 語意分析) ---
         async function fetchWordPOS(word, cardElement) {
             const container = cardElement.querySelector('.js-word-pos');
             const types = new Set();
 
-            // 1. 第一關：查強制字典 (最準確)
             if (MANUAL_POS[word]) {
                 types.add(MANUAL_POS[word]);
             }
 
-            // 2. 第二關：如果沒查到，再問 API
             if (types.size === 0) {
                 try {
                     const res = await fetch(`https://www.moedict.tw/a/${encodeURIComponent(word)}.json`);
                     if(res.ok) {
                         const data = await res.json();
-                        // 語意分析
                         const fullText = JSON.stringify(data);
                         if(fullText.includes('的地方') || 
                            fullText.includes('的機構') || 
                            fullText.includes('的總稱') ||
-                           fullText.includes('名稱')) {
+                           fullText.includes('名稱') ||
+                           fullText.includes('一種')) {
                             types.add('名');
                         }
                         if(fullText.includes('形容') || fullText.includes('的樣子')) {
                             types.add('形');
                         }
-                        // 官方欄位
                         if(data.h) {
                             data.h.forEach(h => {
                                 if(h.d) {
@@ -536,7 +578,6 @@
                 } catch(e) {}
             }
 
-            // 3. 渲染
             container.innerHTML = '';
             if(types.size > 0) {
                 types.forEach(type => {
