@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (詞語合併列印版)</title>
+<title>中文科識字通 (V5.0 完美列印精修版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -32,7 +32,7 @@
 
     h1 { color: var(--primary); letter-spacing: 2px; margin-bottom: 30px; }
 
-    /* 螢幕介面樣式 */
+    /* 工具列 */
     .toolbar {
         position: sticky; top: 0; z-index: 100;
         background: rgba(244, 247, 246, 0.95); padding: 10px;
@@ -45,6 +45,7 @@
     }
     .tool-btn:hover { background: var(--primary-bg); }
 
+    /* 輸入區 */
     .input-section {
         background: var(--bg-white); padding: 30px; border-radius: var(--radius-box);
         box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block;
@@ -61,6 +62,7 @@
     }
     button.main-btn:active { transform: translateY(4px); box-shadow: none; }
 
+    /* 卡片容器 */
     #characters-container { display: flex; flex-direction: column; align-items: center; gap: 40px; }
     
     .word-group-wrapper {
@@ -84,23 +86,29 @@
     .word-visual-left { flex: 2; min-width: 350px; }
     .word-info-right { flex: 1; min-width: 250px; background: #fff8e1; padding: 20px; border-radius: var(--radius-box); }
 
+    /* 單字區塊 */
     .single-char-section {
-        background: #f8f9fa; border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid #eee;
+        background: #f8f9fa; border-radius: 15px; padding: 20px; margin-bottom: 20px;
+        border: 1px solid #eee;
     }
     .char-main-row { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
     .char-block-item { display: flex; flex-direction: column; align-items: center; }
+    
     .visual-label {
         font-weight: bold; color: #555; margin-bottom: 8px; width: 100%;
         border-left: 4px solid var(--primary); padding-left: 8px;
     }
 
+    /* 🔥 修正 1：螢幕版「田字格」 (只有十字虛線) */
     .grid-box {
         width: var(--grid-size); height: var(--grid-size);
         border: 3px solid var(--primary); background-color: white;
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNjAnIGhlaWdodD0nMTYwJz4KICA8bGluZSB4MT0nODAnIHkxPScwJyB4Mj0nODAnIHkyPScxNjAnIHN0cm9rZT0nIzkwY2FmOScgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtZGFzaGFycmF5PSc4LDgnLz4KICA8bGluZSB4MT0nMCcgeTE9nODAnIHgyPScxNjAnIHkyPSc4MCcgc3Ryb2tlPScjOTBjYWY5JyBzdHJva2Utd2lkdGg9JzInIHN0cm9rZS1kYXNoYXJyYXk9JzgsLDgnLz4KPC9zdmc+");
+        /* 使用 SVG data URI 繪製標準田字格 */
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNjAnIGhlaWdodD0nMTYwJz4KICA8bGluZSB4MT0nMCcgeTE9nODAnIHgyPScxNjAnIHkyPSc4MCcgc3Ryb2tlPScjOTBjYWY5JyBzdHJva2Utd2lkdGg9JzInIHN0cm9rZS1kYXNoYXJyYXk9JzgsOCcvLz4KICA8bGluZSB4MT0nODAnIHkxPScwJyB4Mj0nODAnIHkyPScxNjAnIHN0cm9rZT0nIzkwY2FmOScgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtZGFzaGFycmF5PSc4LDgnLz4KPC9zdmc+");
         background-size: cover; position: relative; margin-bottom: 10px;
     }
 
+    /* 拆解圖樣式 */
     .breakdown-section {
         background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-top: 15px;
     }
@@ -114,9 +122,12 @@
     .step-number { position: absolute; bottom: 2px; right: 2px; font-size: 10px; color: #999; }
     .step-box.is-last { border: 2px solid var(--accent); }
 
+    /* 資訊欄 */
     .info-item { margin-bottom: 15px; border-bottom: 1px solid #ffe0b2; padding-bottom: 10px; }
     .info-big-char { font-size: 40px; color: var(--accent); font-weight: bold; font-family: "標楷體"; }
-    .info-radical-link { color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: bold; }
+    .info-radical-link {
+        color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: bold;
+    }
 
     /* Modal */
     .modal-overlay {
@@ -152,28 +163,28 @@
             page-break-inside: avoid;
         }
         
-        /* 修正：Info Column 改為 Flex 佈局，容納多個字 */
         .print-main-line { display: flex; align-items: center; margin-bottom: 10px; }
         .print-info-col { 
-            display: flex; gap: 10px; /* 多個字之間的間距 */
+            display: flex; gap: 15px; 
             padding-right: 15px; border-right: 2px solid #000; margin-right: 15px;
             min-width: 80px; justify-content: center;
         }
-        .print-char-block { text-align: center; } /* 每個字的區塊 */
-        .print-char-big { font-size: 48px; font-family: "標楷體"; font-weight: bold; line-height: 1; }
-        .print-pinyin { font-size: 14px; color: #555; margin-top: 5px; }
+        .print-char-block { text-align: center; } 
+        .print-char-big { font-size: 56px; font-family: "標楷體"; font-weight: bold; line-height: 1; }
+        /* 🔥 修正 2：移除拼音顯示 */
+        .print-pinyin { display: none; }
         
         .print-grid-container { flex: 1; display: flex; gap: 5px; }
+        /* 🔥 修正 3：列印版「田字格」 (只有十字虛線) */
         .print-grid-box {
             width: 70px; height: 70px; border: 1px solid #000;
-            background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc3MCcgaGVpZ2h0PSc3MCc+CiAgPGxpbmUgeDE9JzM1JyB5MT0nMCcgeDI9JzM1JyB5Mj0nNzAnIHN0cm9rZT0nI2NjYycgc3Ryb2tlLXdpZHRoPScwLjUnIHN0cm9rZS1kYXNoYXJyYXk9JzMsMycvPgogIDxsaW5lIHgxPScwJyB5MT0nMzUnIHgyPSc3MCcgeTI9JzM1JyBzdHJva2U9JyNjY2MnIHN0cm9rZS13aWR0aD0nMC41JyBzdHJva2UtZGFzaGFycmF5PSczLDMnLz4KPC9zdmc+");
+            background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc3MCcgaGVpZ2h0PSc3MCc+CiAgPGxpbmUgeDE9JzAnIHkxPSczNScgeDI9JzcwJyB5Mj0nMzUnIHN0cm9rZT0nI2NjYycgc3Ryb2tlLXdpZHRoPScwLjUnIHN0cm9rZS1kYXNoYXJyYXk9JzMsMycvPgogIDxsaW5lIHgxPSczNScgeTE9JzAnIHgyPSczNScgeTI9JzcwJyBzdHJva2U9JyNjY2MnIHN0cm9rZS13aWR0aD0nMC41JyBzdHJva2UtZGFzaGFycmF5PSczLDMnLz4KPC9zdmc+");
         }
         
-        /* 拆解圖區域，支援多行 */
         .print-breakdown-area { margin-left: 20px; }
-        .print-breakdown-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; align-items: center; }
+        .print-breakdown-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; align-items: center; }
         .print-step-box { width: 35px; height: 35px; border: 1px solid #ccc; position: relative; }
-        .print-label { font-size: 12px; font-weight: bold; margin-right: 10px; color: #555; width: 20px;}
+        .print-label { font-size: 14px; font-weight: bold; margin-right: 10px; color: #000; width: 25px;}
     }
 </style>
 </head>
@@ -184,7 +195,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (詞語合併)</button>
         </div>
 
-        <h1>📘 中文科識字通 (詞語合併列印版)</h1>
+        <h1>📘 中文科識字通 (V5.0 精修版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -345,6 +356,7 @@
 
         // --- SVG 絕對顯示版：手動繪製 SVG ---
         async function generateBreakdown(char, container, isPrint) {
+            // 🔥 修正 4：不在列印時顯示「載入中」文字，保持版面乾淨
             if(!isPrint) container.innerHTML = '<span style="font-size:12px; color:#999;">讀取中...</span>';
 
             try {
@@ -353,7 +365,7 @@
                 if (!res.ok) throw new Error("Network Error");
                 const charData = await res.json();
 
-                if(!isPrint) container.innerHTML = ''; 
+                container.innerHTML = ''; // 清空內容
                 const total = charData.strokes.length; 
                 const strokes = charData.strokes;      
 
@@ -447,7 +459,7 @@
             if (force || e.target.id === 'radical-modal') document.getElementById('radical-modal').classList.remove('open');
         }
 
-        // --- 🔥 核心更新：詞語合併列印邏輯 ---
+        // --- 列印邏輯 ---
         async function autoPrint() {
             const input = document.getElementById('input-text').value.trim();
             if (!input) { alert("請先輸入文字"); return; }
@@ -455,50 +467,38 @@
             const printContent = document.getElementById('print-content');
             printContent.innerHTML = ''; 
             
-            // 1. 使用 Intl.Segmenter 進行精準斷詞 (學校 vs 中)
             const segmenter = new Intl.Segmenter('zh-Hant-HK', { granularity: 'word' });
             const segments = [...segmenter.segment(input)];
             
             for (const seg of segments) {
                 const word = seg.segment;
-                // 過濾標點符號
                 if (!/[\u4e00-\u9fa5]/.test(word)) continue;
 
-                // 建立列印行 (Row)
                 const row = document.createElement('div');
                 row.className = 'print-row';
                 
-                // --- 區域 1: 主要行 (左邊大字 + 右邊田字格) ---
                 const mainLine = document.createElement('div');
                 mainLine.className = 'print-main-line';
                 
-                // 左邊資訊欄 (支援多個大字並排)
                 const infoCol = document.createElement('div');
                 infoCol.className = 'print-info-col';
                 
-                // 右邊田字格 (保持空白，供學生練習)
                 const gridContainer = document.createElement('div');
                 gridContainer.className = 'print-grid-container';
-                // 產生 8 個空白格
                 gridContainer.innerHTML = '<div class="print-grid-box"></div>'.repeat(8);
 
-                // 處理這個詞裡的每一個字
                 const chars = word.split('');
                 for (let i = 0; i < chars.length; i++) {
                     const char = chars[i];
                     const uid = Math.random().toString(36).substr(2, 9);
                     
-                    // 建立左側大字區塊 (字+拼音)
                     const charBlock = document.createElement('div');
                     charBlock.className = 'print-char-block';
                     charBlock.innerHTML = `
                         <div class="print-char-big" id="p-big-${uid}"></div>
-                        <div class="print-pinyin">${cnchar.spell(char, 'tone')}</div>
                     `;
                     infoCol.appendChild(charBlock);
                     
-                    // 繪製左側大字
-                    // 稍微延遲以確保 DOM 存在
                     setTimeout(() => {
                         HanziWriter.create(`p-big-${uid}`, char, { 
                             width: 60, height: 60, showOutline: true, strokeColor: '#000' 
@@ -510,31 +510,26 @@
                 mainLine.appendChild(gridContainer);
                 row.appendChild(mainLine);
 
-                // --- 區域 2: 筆畫拆解 (下方) ---
                 const breakdownArea = document.createElement('div');
                 breakdownArea.className = 'print-breakdown-area';
                 
-                // 為每個字產生一行拆解
                 for (const char of chars) {
                     const breakdownRow = document.createElement('div');
                     breakdownRow.className = 'print-breakdown-row';
                     
-                    // 加入標籤 (例如 "學：")
                     const label = document.createElement('div');
                     label.className = 'print-label';
                     label.innerText = char + "：";
                     breakdownRow.appendChild(label);
                     
-                    // 加入拆解圖容器
                     const breakdownContainer = document.createElement('div');
                     breakdownContainer.style.display = 'flex';
                     breakdownContainer.style.gap = '5px';
-                    breakdownContainer.innerText = "載入中...";
+                    // 🔥 修正 5：這裡不填寫 "載入中..."，確保乾淨
                     breakdownRow.appendChild(breakdownContainer);
                     
                     breakdownArea.appendChild(breakdownRow);
 
-                    // 呼叫 SVG 繪圖函式
                     await generateBreakdown(char, breakdownContainer, true);
                 }
                 
@@ -542,7 +537,6 @@
                 printContent.appendChild(row);
             }
 
-            // 等待渲染後列印
             setTimeout(() => { window.print(); }, 1500);
         }
 
