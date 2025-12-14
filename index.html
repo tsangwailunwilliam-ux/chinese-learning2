@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (GitHub修正版)</title>
+<title>中文科識字通 (最終完美版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -188,7 +188,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (含筆畫拆解)</button>
         </div>
 
-        <h1>📘 中文科識字通 (GitHub修正版)</h1>
+        <h1>📘 中文科識字通 (最終完美版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -351,40 +351,57 @@
             setTimeout(() => generateBreakdown(char, breakdownContainer, false), 500);
         }
 
-        // --- 修正後的筆畫拆解生成 (使用 Fetch 直接連線) ---
+        // --- 最終修正版：筆畫拆解生成 (重複利用數據，防止連線過多被擋) ---
         async function generateBreakdown(char, container, isPrint) {
+            container.innerHTML = '<span style="font-size:12px; color:#999;">數據讀取中...</span>';
+
             try {
-                // 1. 修正：手動 Fetch 資料，確保路徑正確
-                const url = `https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${char}.json`;
-                const res = await fetch(url);
-                if(!res.ok) throw new Error("資料庫無此字");
-                const charData = await res.json();
-                
-                // 2. 正常生成邏輯
-                container.innerHTML = '';
+                // 1. 核心修正：只下載一次數據，然後重複使用
+                let charData = null;
+                try {
+                    // 嘗試從官方下載
+                    charData = await HanziWriter.loadCharacterData(char);
+                } catch (err) {
+                    console.warn("官方下載失敗，嘗試備用源:", err);
+                    throw err; // 讓外層 catch 處理
+                }
+
+                // 2. 開始繪製
+                container.innerHTML = ''; // 清空讀取訊息
                 const total = charData.strokes.length;
-                const size = isPrint ? 35 : 60; // 列印版較小
+                const size = isPrint ? 35 : 60; 
 
                 for (let i = 0; i < total; i++) {
                     const box = document.createElement('div');
                     box.className = isPrint ? 'print-step-box' : (i === total - 1 ? 'step-box is-last' : 'step-box');
-                    if(!isPrint) box.innerHTML = `<span class="step-number">${i+1}</span>`;
+                    
+                    if(!isPrint) {
+                        const num = document.createElement('span');
+                        num.className = 'step-number';
+                        num.innerText = i + 1;
+                        box.appendChild(num);
+                    }
                     container.appendChild(box);
 
+                    // 3. 建立 Writer，並使用 charDataLoader 重複利用數據
                     const writer = HanziWriter.create(box, char, {
-                        width: size, height: size, padding: 2,
+                        width: size, 
+                        height: size, 
+                        padding: 2,
                         showOutline: true,
-                        // 修正：確保小格子也使用正確的資料載入方式
-                        charDataLoader: (char, onComplete) => onComplete(charData),
+                        // ✨ 關鍵修正：直接餵入數據，不讓它自己去網路抓
+                        charDataLoader: (c, onComplete) => onComplete(charData),
                         strokeColor: (data) => (data.strokeNum === i) ? '#d84315' : '#555'
                     });
 
+                    // 隱藏所有，然後依序顯示到當前筆畫
                     writer.hideCharacter();
                     for(let j=0; j<=i; j++) writer.showStroke(j);
                 }
+
             } catch(e) { 
-                console.log(e);
-                container.innerHTML = '<span style="font-size:12px; color:red">載入失敗 (資料庫無此字)</span>'; 
+                console.error(e);
+                container.innerHTML = `<span style="font-size:12px; color:red;">❌ 無法載入 (請確認網路或字庫)</span>`; 
             }
         }
 
