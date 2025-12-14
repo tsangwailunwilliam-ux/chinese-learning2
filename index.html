@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (V13.0版)</title>
-
-<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+<title>中文識字通</title> <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar-trad/cnchar.trad.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar-radical/cnchar.radical.min.js"></script>
@@ -28,6 +26,7 @@
         background-color: var(--bg-body);
         color: var(--text-main);
         margin: 0; padding: 20px; text-align: center;
+        transition: background-color 0.3s;
     }
 
     h1 { color: var(--primary); letter-spacing: 2px; margin-bottom: 30px; }
@@ -68,7 +67,10 @@
     button.main-btn:active { transform: translateY(4px); box-shadow: none; }
 
     /* 卡片容器 */
-    #characters-container { display: flex; flex-direction: column; align-items: center; gap: 40px; }
+    #characters-container { 
+        display: flex; flex-direction: column; align-items: center; gap: 40px; 
+        transition: all 0.3s;
+    }
     
     .word-group-wrapper {
         background: var(--bg-white); width: 95%; max-width: 1400px; padding: 30px;
@@ -82,21 +84,16 @@
         border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px;
     }
     
-    /* 標題區塊 */
     .title-block { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
     .word-label-small { font-size: 20px; color: #666; font-weight: bold; margin-right: 5px; }
-    
-    /* 🔥 強制顯示大標題 */
-    .word-title { 
-        font-size: 56px; font-weight: bold; color: var(--primary); line-height: 1.2;
-        display: inline-block; min-width: 50px; /* 避免縮成0 */
-    }
+    .word-title { font-size: 56px; font-weight: bold; color: var(--primary); line-height: 1.2; }
     
     /* 詞語級大標籤 */
     .word-pos-tag {
         font-size: 20px; padding: 6px 15px; border-radius: 20px;
         color: white; font-weight: bold; background-color: #607d8b;
         box-shadow: 0 4px 10px rgba(0,0,0,0.2); vertical-align: middle;
+        margin-left: 10px;
     }
     .word-pos-tag.noun { background-color: #1976d2; }
     .word-pos-tag.verb { background-color: #388e3c; }
@@ -142,7 +139,6 @@
     .info-radical-link { color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: bold; }
     .info-row { margin-bottom: 5px; font-size: 18px; color: #444; }
 
-    /* 單字級詞性 (小號) */
     .pos-container { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
     .pos-tag {
         font-size: 14px; padding: 2px 8px; border-radius: 12px;
@@ -215,9 +211,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (詞語合併)</button>
         </div>
 
-        <h1>📘 中文科識字通 (V13.0 暴力語意分析版)</h1>
-
-        <div class="input-section">
+        <h1>📘 中文識字通</h1> <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
             <input type="text" id="input-text" placeholder="例如：學校" value="學校">
             <button class="main-btn" onclick="generateCards()">🔍 開始練習</button>
@@ -299,6 +293,14 @@
         
         const state = { writers: {} };
 
+        // 🔥 強制字典 (Fallback Dictionary)
+        // 當 API 分析失敗時，優先使用這裡的資料
+        const MANUAL_POS = {
+            '學校': '名', '老師': '名', '學生': '名', '同學': '名', '課本': '名', '書包': '名',
+            '跑步': '動', '游泳': '動', '唱歌': '動', '跳舞': '動',
+            '美麗': '形', '快樂': '形', '乾淨': '形', '聰明': '形'
+        };
+
         function toggleOverviewMode() {
             document.body.classList.toggle('overview-mode');
             const btn = document.getElementById('btn-overview');
@@ -336,7 +338,7 @@
                     }
                     updateDefinition(word, card);
                     
-                    // 🔥 啟動強力語意分析
+                    // 啟動詞性偵測
                     fetchWordPOS(word, card);
                 }
             } catch (err) {
@@ -350,7 +352,6 @@
         function createCardElement(word) {
             const template = document.getElementById('card-template');
             const clone = template.content.cloneNode(true);
-            // 🔥 直接在這裡設定標題，不依賴任何 API，保證顯示
             clone.querySelector('.js-title').textContent = word;
             clone.querySelector('.js-btn-mandarin').onclick = () => speakText(word, 'zh-CN');
             clone.querySelector('.js-btn-cantonese').onclick = () => speakText(word, 'zh-HK');
@@ -494,58 +495,60 @@
             } catch(e) {}
         }
 
-        // --- 🔥 暴力語意分析：解決詞語無 type 問題 ---
+        // --- 🔥 最終修正：詞語級詞性查詢 (強制字典 + 語意分析) ---
         async function fetchWordPOS(word, cardElement) {
             const container = cardElement.querySelector('.js-word-pos');
-            try {
-                const res = await fetch(`https://www.moedict.tw/a/${encodeURIComponent(word)}.json`);
-                if(!res.ok) return;
-                const data = await res.json();
-                
-                const types = new Set();
-                
-                // 1. 轉成字串，暴力搜尋
-                const fullText = JSON.stringify(data);
-                
-                // 2. 關鍵字規則 (Rule-based Heuristics)
-                // 名詞特徵：地方、機構、總稱、一種...
-                if(fullText.includes('的地方') || 
-                   fullText.includes('的機構') || 
-                   fullText.includes('的總稱') ||
-                   fullText.includes('名稱') ||
-                   fullText.includes('一種')) {
-                    types.add('名');
-                }
-                
-                // 形容詞特徵
-                if(fullText.includes('形容') || fullText.includes('的樣子')) {
-                    types.add('形');
-                }
+            const types = new Set();
 
-                // 3. 官方欄位 (如果有)
-                if(data.h) {
-                    data.h.forEach(h => {
-                        if(h.d) {
-                            h.d.forEach(d => {
-                                if(d.type) types.add(d.type.replace('詞',''));
+            // 1. 第一關：查強制字典 (最準確)
+            if (MANUAL_POS[word]) {
+                types.add(MANUAL_POS[word]);
+            }
+
+            // 2. 第二關：如果沒查到，再問 API
+            if (types.size === 0) {
+                try {
+                    const res = await fetch(`https://www.moedict.tw/a/${encodeURIComponent(word)}.json`);
+                    if(res.ok) {
+                        const data = await res.json();
+                        // 語意分析
+                        const fullText = JSON.stringify(data);
+                        if(fullText.includes('的地方') || 
+                           fullText.includes('的機構') || 
+                           fullText.includes('的總稱') ||
+                           fullText.includes('名稱')) {
+                            types.add('名');
+                        }
+                        if(fullText.includes('形容') || fullText.includes('的樣子')) {
+                            types.add('形');
+                        }
+                        // 官方欄位
+                        if(data.h) {
+                            data.h.forEach(h => {
+                                if(h.d) {
+                                    h.d.forEach(d => {
+                                        if(d.type) types.add(d.type.replace('詞',''));
+                                    });
+                                }
                             });
                         }
-                    });
-                }
+                    }
+                } catch(e) {}
+            }
 
-                // 4. 渲染 (Set 去重)
-                if(types.size > 0) {
-                    types.forEach(type => {
-                        const tag = document.createElement('span');
-                        tag.className = 'word-pos-tag'; 
-                        tag.innerText = type;
-                        if(type.includes('名')) tag.classList.add('noun');
-                        else if(type.includes('動')) tag.classList.add('verb');
-                        else if(type.includes('形')) tag.classList.add('adj');
-                        container.appendChild(tag);
-                    });
-                }
-            } catch(e) {}
+            // 3. 渲染
+            container.innerHTML = '';
+            if(types.size > 0) {
+                types.forEach(type => {
+                    const tag = document.createElement('span');
+                    tag.className = 'word-pos-tag'; 
+                    tag.innerText = type;
+                    if(type.includes('名')) tag.classList.add('noun');
+                    else if(type.includes('動')) tag.classList.add('verb');
+                    else if(type.includes('形')) tag.classList.add('adj');
+                    container.appendChild(tag);
+                });
+            }
         }
 
         function startQuizLoop(uid) {
@@ -683,4 +686,3 @@
     </script>
 </body>
 </html>
-
