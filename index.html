@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (V12.0 智能語意分析版)</title>
+<title>中文科識字通 (V13.0 暴力語意分析版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -77,21 +77,26 @@
     }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* 🔥 標題區塊大升級 */
     .word-group-header {
         display: flex; justify-content: space-between; align-items: center;
         border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px;
     }
     
+    /* 標題區塊 */
     .title-block { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
-    .word-label-small { font-size: 16px; color: #888; font-weight: normal; margin-right: 5px; }
-    .word-title { font-size: 48px; font-weight: bold; color: var(--primary); line-height: 1; }
+    .word-label-small { font-size: 20px; color: #666; font-weight: bold; margin-right: 5px; }
+    
+    /* 🔥 強制顯示大標題 */
+    .word-title { 
+        font-size: 56px; font-weight: bold; color: var(--primary); line-height: 1.2;
+        display: inline-block; min-width: 50px; /* 避免縮成0 */
+    }
     
     /* 詞語級大標籤 */
     .word-pos-tag {
         font-size: 20px; padding: 6px 15px; border-radius: 20px;
         color: white; font-weight: bold; background-color: #607d8b;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2); vertical-align: middle;
     }
     .word-pos-tag.noun { background-color: #1976d2; }
     .word-pos-tag.verb { background-color: #388e3c; }
@@ -210,7 +215,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (詞語合併)</button>
         </div>
 
-        <h1>📘 中文科識字通 (V12.0 智能語意分析版)</h1>
+        <h1>📘 中文科識字通 (V13.0 暴力語意分析版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -246,7 +251,8 @@
                 <div class="title-block">
                     <span class="word-label-small">詞語：</span>
                     <span class="word-title js-title"></span>
-                    <div class="js-word-pos"></div> </div>
+                    <div class="js-word-pos"></div> 
+                </div>
                 <div class="audio-controls">
                     <button class="js-btn-mandarin">🔊 普通話</button>
                     <button class="js-btn-cantonese">🔊 粵語</button>
@@ -330,7 +336,7 @@
                     }
                     updateDefinition(word, card);
                     
-                    // 🔥 啟動智能詞性偵測 (掃描解釋文)
+                    // 🔥 啟動強力語意分析
                     fetchWordPOS(word, card);
                 }
             } catch (err) {
@@ -344,6 +350,7 @@
         function createCardElement(word) {
             const template = document.getElementById('card-template');
             const clone = template.content.cloneNode(true);
+            // 🔥 直接在這裡設定標題，不依賴任何 API，保證顯示
             clone.querySelector('.js-title').textContent = word;
             clone.querySelector('.js-btn-mandarin').onclick = () => speakText(word, 'zh-CN');
             clone.querySelector('.js-btn-cantonese').onclick = () => speakText(word, 'zh-HK');
@@ -454,7 +461,6 @@
                 </div>
             `;
             infoContainer.appendChild(div);
-            // 查詢單字詞性
             fetchPOS(char, div.querySelector('.pos-container'));
         }
 
@@ -488,7 +494,7 @@
             } catch(e) {}
         }
 
-        // --- 🔥 智能詞語級詞性 (掃描解釋版) ---
+        // --- 🔥 暴力語意分析：解決詞語無 type 問題 ---
         async function fetchWordPOS(word, cardElement) {
             const container = cardElement.querySelector('.js-word-pos');
             try {
@@ -498,36 +504,40 @@
                 
                 const types = new Set();
                 
-                // 1. 優先查看官方 type 欄位
+                // 1. 轉成字串，暴力搜尋
+                const fullText = JSON.stringify(data);
+                
+                // 2. 關鍵字規則 (Rule-based Heuristics)
+                // 名詞特徵：地方、機構、總稱、一種...
+                if(fullText.includes('的地方') || 
+                   fullText.includes('的機構') || 
+                   fullText.includes('的總稱') ||
+                   fullText.includes('名稱') ||
+                   fullText.includes('一種')) {
+                    types.add('名');
+                }
+                
+                // 形容詞特徵
+                if(fullText.includes('形容') || fullText.includes('的樣子')) {
+                    types.add('形');
+                }
+
+                // 3. 官方欄位 (如果有)
                 if(data.h) {
                     data.h.forEach(h => {
                         if(h.d) {
                             h.d.forEach(d => {
                                 if(d.type) types.add(d.type.replace('詞',''));
-                                // 2. 智能掃描：如果沒有 type，掃描解釋內文尋找 [名] [動] 等標記
-                                if(d.f && d.f.match(/\[(名|動|形|副)\]/)) {
-                                    const match = d.f.match(/\[(名|動|形|副)\]/);
-                                    if(match) types.add(match[1]);
-                                }
                             });
                         }
                     });
                 }
 
-                // 3. 如果還是沒有，啟動關鍵字偵測 (Fallback)
-                // 針對「學校」這種常見詞，字典解釋可能寫「子弟求學的地方」，雖沒標籤但肯定是名詞
-                // 這裡做一個簡單的補救：
-                if(types.size === 0) {
-                    // 掃描解釋，如果有「...的地方」、「...的機構」通常是名詞
-                    const fullDef = JSON.stringify(data);
-                    if(fullDef.includes('的地方') || fullDef.includes('的機構')) types.add('名');
-                }
-
-                // 渲染
+                // 4. 渲染 (Set 去重)
                 if(types.size > 0) {
                     types.forEach(type => {
                         const tag = document.createElement('span');
-                        tag.className = 'word-pos-tag';
+                        tag.className = 'word-pos-tag'; 
                         tag.innerText = type;
                         if(type.includes('名')) tag.classList.add('noun');
                         else if(type.includes('動')) tag.classList.add('verb');
