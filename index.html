@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中文科識字通 (全功能旗艦版)</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cnchar-trad/cnchar.trad.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cnchar-radical/cnchar.radical.min.js"></script>
+
+<style>
+    :root {
+        --primary: #1976d2;
+        --primary-bg: #e3f2fd;
+        --accent: #d84315;
+        --success: #4caf50;
+        --text-main: #333;
+        --bg-body: #f4f7f6;
+        --bg-white: #ffffff;
+        --radius-box: 20px;
+        --grid-size: 160px;
+    }
+
+    /* ================= 螢幕顯示樣式 ================= */
+    body {
+        font-family: "微軟正黑體", sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        margin: 0; padding: 20px; text-align: center;
+    }
+
+    h1 { color: var(--primary); letter-spacing: 2px; margin-bottom: 30px; }
+
+    /* 工具列 */
+    .toolbar {
+        position: sticky; top: 0; z-index: 100;
+        background: rgba(244, 247, 246, 0.95); padding: 10px;
+        display: flex; justify-content: center; gap: 15px;
+        backdrop-filter: blur(5px); border-bottom: 1px solid #ddd;
+    }
+    .tool-btn {
+        padding: 8px 20px; border-radius: 20px; border: 2px solid var(--primary);
+        background: white; color: var(--primary); font-weight: bold; cursor: pointer;
+    }
+    .tool-btn:hover { background: var(--primary-bg); }
+
+    /* 輸入區 */
+    .input-section {
+        background: var(--bg-white); padding: 30px; border-radius: var(--radius-box);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block;
+        margin: 30px 0; border-top: 6px solid var(--primary);
+    }
+    input[type="text"] {
+        font-size: 28px; padding: 10px; width: 300px;
+        border: 2px solid #bdc3c7; border-radius: 10px; text-align: center;
+    }
+    button.main-btn {
+        font-size: 24px; padding: 10px 30px; margin-left: 10px;
+        background-color: var(--primary); color: white; border: none;
+        border-radius: 10px; cursor: pointer; box-shadow: 0 4px 0 #0d47a1;
+    }
+    button.main-btn:active { transform: translateY(4px); box-shadow: none; }
+
+    /* 卡片容器 */
+    #characters-container { display: flex; flex-direction: column; align-items: center; gap: 40px; }
+    
+    .word-group-wrapper {
+        background: var(--bg-white); width: 95%; max-width: 1200px; padding: 30px;
+        border-radius: var(--radius-box); box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        text-align: left; animation: fadeInUp 0.5s ease-out;
+    }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .word-group-header {
+        display: flex; justify-content: space-between; align-items: center;
+        border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px;
+    }
+    .word-title { font-size: 32px; font-weight: bold; color: var(--primary); }
+    .audio-controls button {
+        background: var(--primary-bg); color: var(--primary); border: none;
+        padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-left: 10px;
+    }
+
+    /* 內容區 */
+    .word-main-flex { display: flex; gap: 40px; flex-wrap: wrap; }
+    .word-visual-left { flex: 2; min-width: 350px; }
+    .word-info-right { flex: 1; min-width: 250px; background: #fff8e1; padding: 20px; border-radius: var(--radius-box); }
+
+    /* 單字區塊 */
+    .single-char-section {
+        background: #f8f9fa; border-radius: 15px; padding: 20px; margin-bottom: 20px;
+        border: 1px solid #eee;
+    }
+    .char-main-row { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+    .char-block-item { display: flex; flex-direction: column; align-items: center; }
+    
+    .visual-label {
+        font-weight: bold; color: #555; margin-bottom: 8px; width: 100%;
+        border-left: 4px solid var(--primary); padding-left: 8px;
+    }
+
+    /* 田字格 */
+    .grid-box {
+        width: var(--grid-size); height: var(--grid-size);
+        border: 3px solid var(--primary); background-color: white;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNjAnIGhlaWdodD0nMTYwJz4KICA8bGluZSB4MT0nODAnIHkxPScwJyB4Mj0nODAnIHkyPScxNjAnIHN0cm9rZT0nIzkwY2FmOScgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtZGFzaGFycmF5PSc4LDgnLz4KICA8bGluZSB4MT0nMCcgeTE9nODAnIHgyPScxNjAnIHkyPSc4MCcgc3Ryb2tlPScjOTBjYWY5JyBzdHJva2Utd2lkdGg9JzInIHN0cm9rZS1kYXNoYXJyYXk9JzgsLDgnLz4KPC9zdmc+");
+        background-size: cover; position: relative; margin-bottom: 10px;
+    }
+
+    /* 螢幕上的拆解圖 */
+    .breakdown-section {
+        background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-top: 15px;
+    }
+    .breakdown-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .step-box {
+        width: 60px; height: 60px; border: 1px solid #ccc; border-radius: 5px; position: relative; background: white;
+    }
+    .step-number { position: absolute; bottom: 2px; right: 2px; font-size: 10px; color: #999; }
+    .step-box.is-last { border: 2px solid var(--accent); }
+
+    /* 資訊欄 */
+    .info-item { margin-bottom: 15px; border-bottom: 1px solid #ffe0b2; padding-bottom: 10px; }
+    .info-big-char { font-size: 40px; color: var(--accent); font-weight: bold; font-family: "標楷體"; }
+    .info-radical-link {
+        color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: bold;
+    }
+
+    /* ================= Modal (部首彈出視窗) ================= */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 200; display: none;
+        justify-content: center; align-items: center; backdrop-filter: blur(3px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-content {
+        background: white; width: 80%; max-width: 600px; padding: 30px;
+        border-radius: 20px; border: 5px solid #ffccbc; position: relative;
+    }
+    .modal-close { position: absolute; top: 10px; right: 15px; font-size: 30px; cursor: pointer; }
+    .radical-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 20px; }
+    .radical-char-btn {
+        width: 60px; height: 60px; font-size: 30px; border: 1px solid #ddd;
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+        background: #fff3e0; border-radius: 10px; font-family: "標楷體";
+    }
+    .radical-char-btn:hover { background: #ffe0b2; transform: scale(1.1); }
+
+    /* ================= 列印專用樣式 (Print CSS) ================= */
+    #print-container { display: none; } /* 螢幕上隱藏 */
+
+    @media print {
+        @page { size: A4; margin: 10mm; }
+        body { background: white; -webkit-print-color-adjust: exact; padding: 0; }
+        #screen-ui, .toolbar, .modal-overlay { display: none !important; } /* 隱藏螢幕介面 */
+        #print-container { display: block !important; } /* 顯示列印介面 */
+        
+        /* 列印排版 */
+        .print-page-header { text-align: center; border-bottom: 2px solid black; margin-bottom: 20px; padding-bottom: 10px; }
+        .print-row {
+            display: flex; flex-direction: column; margin-bottom: 25px; 
+            border-bottom: 1px dashed #ccc; padding-bottom: 15px;
+            page-break-inside: avoid; /* 避免一個字被切兩頁 */
+        }
+        .print-main-line { display: flex; align-items: center; margin-bottom: 10px; }
+        .print-info-col { width: 80px; text-align: center; border-right: 2px solid #000; margin-right: 15px; }
+        .print-char-big { font-size: 48px; font-family: "標楷體"; font-weight: bold; }
+        .print-pinyin { font-size: 14px; color: #555; }
+        
+        .print-grid-container { flex: 1; display: flex; gap: 5px; }
+        .print-grid-box {
+            width: 70px; height: 70px; border: 1px solid #000;
+            background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc3MCcgaGVpZ2h0PSc3MCc+CiAgPGxpbmUgeDE9JzM1JyB5MT0nMCcgeDI9JzM1JyB5Mj0nNzAnIHN0cm9rZT0nI2NjYycgc3Ryb2tlLXdpZHRoPScwLjUnIHN0cm9rZS1kYXNoYXJyYXk9JzMsMycvPgogIDxsaW5lIHgxPScwJyB5MT0nMzUnIHgyPSc3MCcgeTI9JzM1JyBzdHJva2U9JyNjY2MnIHN0cm9rZS13aWR0aD0nMC41JyBzdHJva2UtZGFzaGFycmF5PSczLDMnLz4KPC9zdmc+");
+        }
+        
+        /* 列印版拆解圖 */
+        .print-breakdown-row { display: flex; flex-wrap: wrap; gap: 5px; margin-left: 95px; margin-top: 5px; }
+        .print-step-box { width: 35px; height: 35px; border: 1px solid #ccc; position: relative; }
+        .print-label { font-size: 12px; font-weight: bold; margin-left: 95px; color: #555; }
+    }
+</style>
+</head>
+<body>
+
+    <div id="screen-ui">
+        <div class="toolbar">
+            <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (含筆畫拆解)</button>
+        </div>
+
+        <h1>📘 中文科識字通 (全功能旗艦版)</h1>
+
+        <div class="input-section">
+            <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
+            <input type="text" id="input-text" placeholder="例如：學校" value="學校">
+            <button class="main-btn" onclick="generateCards()">🔍 開始練習</button>
+            <div id="loading" style="display:none; margin-top:10px; color:#1976d2;">⏳ 資料處理中...</div>
+        </div>
+
+        <div id="characters-container"></div>
+    </div>
+
+    <div id="radical-modal" class="modal-overlay" onclick="closeRadicalModal(event)">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeRadicalModal(null, true)">×</span>
+            <h2 style="color:var(--accent)">🔍 部首字例：<span id="modal-radical-title"></span></h2>
+            <div id="modal-grid" class="radical-grid"></div>
+        </div>
+    </div>
+
+    <div id="print-container">
+        <div class="print-page-header">
+            <h2>中文科寫字練習</h2>
+            <div style="display:flex; justify-content:space-between; padding:0 50px;">
+                <span>姓名：__________</span><span>日期：__________</span><span>分數：__________</span>
+            </div>
+        </div>
+        <div id="print-content"></div>
+    </div>
+
+    <template id="card-template">
+        <div class="word-group-wrapper">
+            <div class="word-group-header">
+                <span class="word-title js-title"></span>
+                <div class="audio-controls">
+                    <button class="js-btn-mandarin">🔊 普通話</button>
+                    <button class="js-btn-cantonese">🔊 粵語</button>
+                </div>
+            </div>
+            <div class="word-main-flex">
+                <div class="word-visual-left js-visual-container"></div>
+                <div class="word-info-right js-info-container"></div>
+            </div>
+            <div style="margin-top:20px; border-top:1px dashed #ccc; padding-top:10px;">
+                <div style="font-weight:bold; color:var(--success)">📖 解釋</div>
+                <div class="js-def-text" style="line-height:1.6"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="char-block-template">
+        <div class="single-char-section">
+            <div class="char-main-row">
+                <div class="char-block-item">
+                    <div class="visual-label">👀 筆順演示</div>
+                    <div class="grid-box js-demo-target"></div>
+                    <button class="tool-btn js-play-btn" style="padding: 2px 10px; font-size: 14px;">▶ 播放</button>
+                </div>
+                <div class="char-block-item">
+                    <div class="visual-label label-quiz">✏️ 學生練習</div>
+                    <div class="grid-box js-quiz-target" style="cursor:crosshair"></div>
+                    <span class="js-status-text" style="font-weight:bold; color:var(--accent)">請寫字</span>
+                    <button class="tool-btn js-reset-btn" style="padding: 2px 10px; font-size: 14px;">重寫</button>
+                </div>
+            </div>
+            <div class="breakdown-section">
+                <div class="visual-label" style="border-color: var(--accent);">🔢 筆畫拆解 (紅色為當前筆畫)</div>
+                <div class="breakdown-grid js-breakdown-target">
+                    <span style="color:#aaa; font-size:12px;">若為 file:// 模式可能無法載入，請上傳至伺服器。</span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        cnchar.use(window.cncharTrad);
+        const HK_COMMON_CHARS = "一二三四五六七八九十百千萬日月水火木金土人口手足耳目心力刀弓戈虫貝車舟馬羊牛鳥魚肉雨風雲電田衣食住行父母兄弟姐妹男女老少大小高低長短多少前後左右內外上下東西南北春夏秋冬早晚午夜年月日時分秒今天明昨星期學校師生課書筆紙畫圖文數字詞句言語問答看聽說讀寫坐立走跑跳吃喝睡玩樂喜怒哀樂這那誰什麼裡邊家國城市村草花樹林果菜瓜豆米麵飯肉蛋奶油鹽糖茶杯盤碗筷刀叉匙桌椅床燈門窗牆地房店車船飛機公巴士的士地鐵站路橋江河海洋山谷石沙泥光暗冷熱快慢好壞真假對錯美麗乾淨整齊聰明勤勞勇敢友愛禮貌守規誠實健康快樂幫忙合作分享遊戲運動唱歌跳舞畫畫講故事做功課洗臉刷牙穿衣脫鞋收拾整理清潔掃地抹窗澆水種花飼養寵物狗貓兔雞鴨鵝豬牛羊身體頭頸肩背腰臀腿腳膝蓋顏面眼眉鼻口牙舌唇耳髮指甲皮膚顏色紅白黃綠藍紫黑灰橙啡";
+        
+        const state = { writers: {} };
+
+        // --- 主程式 ---
+        async function generateCards() {
+            const input = document.getElementById('input-text').value.trim();
+            const container = document.getElementById('characters-container');
+            const loading = document.getElementById('loading');
+
+            if (!input) { alert("請輸入文字"); return; }
+            
+            container.innerHTML = ''; 
+            loading.style.display = 'block';
+            state.writers = {}; 
+
+            try {
+                const segmenter = new Intl.Segmenter('zh-Hant-HK', { granularity: 'word' });
+                const segments = [...segmenter.segment(input)];
+
+                for (const segment of segments) {
+                    const word = segment.segment;
+                    if (!/[\u4e00-\u9fa5]/.test(word)) continue;
+
+                    const card = createCardElement(word);
+                    container.appendChild(card); 
+
+                    const chars = word.split('');
+                    for (const char of chars) {
+                        setupCharacterVisuals(char, card);
+                        setupCharacterInfo(char, card);
+                    }
+                    updateDefinition(word, card);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("發生錯誤");
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // --- 建立卡片 DOM ---
+        function createCardElement(word) {
+            const template = document.getElementById('card-template');
+            const clone = template.content.cloneNode(true);
+            const title = (word.length === 1) ? `生字：${word}` : `詞語：${word}`;
+            clone.querySelector('.js-title').textContent = title;
+            clone.querySelector('.js-btn-mandarin').onclick = () => speakText(word, 'zh-CN');
+            clone.querySelector('.js-btn-cantonese').onclick = () => speakText(word, 'zh-HK');
+            return clone.children[0];
+        }
+
+        // --- 設定單字視覺 (含螢幕拆解) ---
+        function setupCharacterVisuals(char, cardElement) {
+            const visualContainer = cardElement.querySelector('.js-visual-container');
+            const template = document.getElementById('char-block-template');
+            const clone = template.content.cloneNode(true);
+            
+            const uid = Math.random().toString(36).substr(2, 9);
+            const demoId = `demo-${uid}`;
+            const quizId = `quiz-${uid}`;
+            const breakdownContainer = clone.querySelector('.js-breakdown-target');
+
+            clone.querySelector('.js-demo-target').id = demoId;
+            clone.querySelector('.js-quiz-target').id = quizId;
+
+            const playBtn = clone.querySelector('.js-play-btn');
+            const resetBtn = clone.querySelector('.js-reset-btn');
+            const statusText = clone.querySelector('.js-status-text');
+
+            visualContainer.appendChild(clone);
+
+            // 初始化 Writer
+            const demo = HanziWriter.create(demoId, char, { width: 160, height: 160, padding: 5, showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 200, strokeColor: '#555' });
+            const quiz = HanziWriter.create(quizId, char, { width: 160, height: 160, padding: 5, showOutline: true, strokeColor: '#333', highlightColor: '#4CAF50', drawingWidth: 20, showHintAfterMisses: 2 });
+            
+            state.writers[uid] = { demo, quiz, status: statusText };
+
+            startQuizLoop(uid);
+            playBtn.onclick = () => demo.animateCharacter();
+            resetBtn.onclick = () => resetQuiz(uid);
+
+            // 生成螢幕用筆畫拆解
+            setTimeout(() => generateBreakdown(char, breakdownContainer, false), 500);
+        }
+
+        // --- 通用筆畫拆解生成 (螢幕 + 列印) ---
+        async function generateBreakdown(char, container, isPrint) {
+            try {
+                const charData = await HanziWriter.loadCharacterData(char);
+                container.innerHTML = '';
+                const total = charData.strokes.length;
+                const size = isPrint ? 35 : 60; // 列印版較小
+
+                for (let i = 0; i < total; i++) {
+                    const box = document.createElement('div');
+                    box.className = isPrint ? 'print-step-box' : (i === total - 1 ? 'step-box is-last' : 'step-box');
+                    if(!isPrint) box.innerHTML = `<span class="step-number">${i+1}</span>`;
+                    container.appendChild(box);
+
+                    const writer = HanziWriter.create(box, char, {
+                        width: size, height: size, padding: 2,
+                        showOutline: true,
+                        strokeColor: (data) => (data.strokeNum === i) ? '#d84315' : '#555' // 紅色當前筆畫
+                    });
+
+                    writer.hideCharacter();
+                    for(let j=0; j<=i; j++) writer.showStroke(j);
+                }
+            } catch(e) { 
+                console.log(e);
+                container.innerHTML = '<span style="font-size:12px; color:red">無法載入(請上傳至伺服器)</span>'; 
+            }
+        }
+
+        // --- 設定資訊與部首 Modal ---
+        function setupCharacterInfo(char, cardElement) {
+            const infoContainer = cardElement.querySelector('.js-info-container');
+            const pinyin = cnchar.spell(char, 'tone');
+            let radical = '無';
+            try { radical = cnchar.radical(char)[0].radical; } catch {}
+
+            const div = document.createElement('div');
+            div.className = 'info-item';
+            div.innerHTML = `
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <div class="info-big-char">${char}</div>
+                    <div>
+                        <div>拼音：${pinyin}</div>
+                        <div onclick="openRadicalModal('${radical}')" class="info-radical-link">部首：${radical} (點擊查看)</div>
+                    </div>
+                </div>
+            `;
+            infoContainer.appendChild(div);
+        }
+
+        // --- 測驗邏輯 ---
+        function startQuizLoop(uid) {
+            const w = state.writers[uid];
+            w.status.innerText = "請寫字"; w.status.style.color = "#d84315";
+            w.quiz.quiz({
+                onMistake: () => { w.status.innerText = "❌"; },
+                onCorrectStroke: () => { w.status.innerText = "✅"; },
+                onComplete: () => { w.status.innerText = "🎉 完美"; }
+            });
+        }
+        function resetQuiz(uid) { startQuizLoop(uid); }
+
+        // --- 部首 Modal 邏輯 ---
+        function openRadicalModal(radical) {
+            if(!radical || radical === '無') return;
+            document.getElementById('modal-radical-title').innerText = radical;
+            const grid = document.getElementById('modal-grid');
+            grid.innerHTML = '';
+            
+            const matches = HK_COMMON_CHARS.split('').filter(c => {
+                try { return cnchar.radical(c)[0].radical === radical; } catch { return false; }
+            }).slice(0, 16);
+
+            matches.forEach(c => {
+                const btn = document.createElement('div');
+                btn.className = 'radical-char-btn';
+                btn.innerText = c;
+                btn.onclick = () => { 
+                    document.getElementById('input-text').value += c; 
+                    closeRadicalModal(null, true);
+                };
+                grid.appendChild(btn);
+            });
+            document.getElementById('radical-modal').classList.add('open');
+        }
+        function closeRadicalModal(e, force) {
+            if (force || e.target.id === 'radical-modal') document.getElementById('radical-modal').classList.remove('open');
+        }
+
+        // --- 列印功能 (含筆畫拆解) ---
+        async function autoPrint() {
+            const input = document.getElementById('input-text').value.trim();
+            if (!input) { alert("請先輸入文字"); return; }
+            
+            const printContent = document.getElementById('print-content');
+            printContent.innerHTML = ''; // 清空舊的
+            
+            // 找出所有漢字
+            const chars = input.split('').filter(c => /[\u4e00-\u9fa5]/.test(c));
+            
+            for (const char of chars) {
+                const uid = Math.random().toString(36).substr(2, 9);
+                const row = document.createElement('div');
+                row.className = 'print-row';
+                
+                // 第一行：大字 + 田字格
+                const mainLine = document.createElement('div');
+                mainLine.className = 'print-main-line';
+                mainLine.innerHTML = `
+                    <div class="print-info-col">
+                        <div class="print-char-big">${char}</div>
+                        <div class="print-pinyin">${cnchar.spell(char, 'tone')}</div>
+                    </div>
+                    <div class="print-grid-container">
+                        <div class="print-grid-box" id="p-demo-${uid}"></div>
+                        ${'<div class="print-grid-box"></div>'.repeat(8)}
+                    </div>
+                `;
+                
+                // 第二行：筆畫拆解
+                const label = document.createElement('div');
+                label.className = 'print-label';
+                label.innerText = '筆畫拆解：';
+                
+                const breakdownRow = document.createElement('div');
+                breakdownRow.className = 'print-breakdown-row';
+                breakdownRow.innerText = '載入中...';
+                
+                row.appendChild(mainLine);
+                row.appendChild(label);
+                row.appendChild(breakdownRow);
+                printContent.appendChild(row);
+
+                // 畫大字 (Demo)
+                HanziWriter.create(`p-demo-${uid}`, char, { width: 70, height: 70, showOutline: true, strokeColor: '#000' });
+
+                // 畫拆解圖 (Await 確保列印前畫好)
+                await generateBreakdown(char, breakdownRow, true);
+            }
+
+            // 等待一下確保渲染完成
+            setTimeout(() => { window.print(); }, 1000);
+        }
+
+        // --- 工具 ---
+        function speakText(text, lang) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = lang; 
+            window.speechSynthesis.speak(u);
+        }
+        
+        async function updateDefinition(word, cardElement) {
+            const defEl = cardElement.querySelector('.js-def-text');
+            try {
+                const res = await fetch(`https://www.moedict.tw/a/${encodeURIComponent(word)}.json`);
+                if(res.ok) {
+                    const data = await res.json();
+                    let defs = [];
+                    if(data.h) data.h.forEach(h => { if(h.d) h.d.forEach(d => { if(d.f) defs.push(d.f.replace(/[~`\[\]]/g,"")); })});
+                    defEl.textContent = defs.length ? defs.map((d,i)=>`${i+1}. ${d}`).join('\n') : "無詳細解釋";
+                } else { defEl.textContent = "查無資料"; }
+            } catch { defEl.textContent = "無資料或連線問題"; }
+        }
+    </script>
+</body>
+</html>
