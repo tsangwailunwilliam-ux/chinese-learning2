@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (V11.0 智能詞語詞性版)</title>
+<title>中文科識字通 (V12.0 智能語意分析版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -28,7 +28,6 @@
         background-color: var(--bg-body);
         color: var(--text-main);
         margin: 0; padding: 20px; text-align: center;
-        transition: background-color 0.3s;
     }
 
     h1 { color: var(--primary); letter-spacing: 2px; margin-bottom: 30px; }
@@ -47,7 +46,6 @@
         transition: all 0.2s;
     }
     .tool-btn:hover { background: var(--primary-bg); transform: translateY(-2px); }
-    
     .tool-btn.active-mode {
         background: var(--primary); color: white; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
     }
@@ -70,34 +68,30 @@
     button.main-btn:active { transform: translateY(4px); box-shadow: none; }
 
     /* 卡片容器 */
-    #characters-container { 
-        display: flex; flex-direction: column; align-items: center; gap: 40px; 
-        transition: all 0.3s;
-    }
+    #characters-container { display: flex; flex-direction: column; align-items: center; gap: 40px; }
     
     .word-group-wrapper {
         background: var(--bg-white); width: 95%; max-width: 1400px; padding: 30px;
         border-radius: var(--radius-box); box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         text-align: left; animation: fadeInUp 0.5s ease-out;
-        transition: all 0.3s;
     }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* 🔥 標題區塊大升級 */
     .word-group-header {
         display: flex; justify-content: space-between; align-items: center;
         border-bottom: 2px dashed #eee; padding-bottom: 15px; margin-bottom: 20px;
     }
     
-    /* 🔥 修正：詞語標題區塊，容納詞性標籤 */
-    .title-block { display: flex; align-items: center; gap: 15px; }
-    .word-title { font-size: 32px; font-weight: bold; color: var(--primary); }
+    .title-block { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+    .word-label-small { font-size: 16px; color: #888; font-weight: normal; margin-right: 5px; }
+    .word-title { font-size: 48px; font-weight: bold; color: var(--primary); line-height: 1; }
     
-    /* 🔥 新增：詞語級詞性標籤 (大號) */
+    /* 詞語級大標籤 */
     .word-pos-tag {
-        font-size: 18px; padding: 4px 12px; border-radius: 15px;
+        font-size: 20px; padding: 6px 15px; border-radius: 20px;
         color: white; font-weight: bold; background-color: #607d8b;
-        vertical-align: middle;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
     .word-pos-tag.noun { background-color: #1976d2; }
     .word-pos-tag.verb { background-color: #388e3c; }
@@ -113,34 +107,21 @@
     .word-info-right { flex: 1; min-width: 250px; background: #fff8e1; padding: 20px; border-radius: var(--radius-box); }
 
     .single-char-section {
-        background: #f8f9fa; border-radius: 15px; padding: 20px; margin-bottom: 20px;
-        border: 1px solid #eee;
+        background: #f8f9fa; border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid #eee;
     }
     .char-main-row { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
     .char-block-item { display: flex; flex-direction: column; align-items: center; }
-    
-    .visual-label {
-        font-size: 20px; font-weight: bold; color: #555; margin-bottom: 15px; width: 100%;
-        border-left: 6px solid var(--primary); padding-left: 10px;
-    }
+    .visual-label { font-size: 20px; font-weight: bold; color: #555; margin-bottom: 15px; width: 100%; border-left: 6px solid var(--primary); padding-left: 10px; }
 
-    /* 螢幕版田字格 (紅色虛線) */
     .grid-box {
         width: var(--grid-size); height: var(--grid-size);
-        border: 4px solid var(--primary); 
-        background-color: white;
+        border: 4px solid var(--primary); background-color: white;
         background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxsaW5lIHgxPSI1MCUiIHkxPSIwIiB4Mj0iNTAlIiB5Mj0iMTAwJSIgc3Ryb2tlPSIjZmZjY2NjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjgsOCIvPjxsaW5lIHgxPSIwIiB5MT0iNTAlIiB4Mj0iMTAwJSIgeTI9IjUwJSIgc3Ryb2tlPSIjZmZjY2NjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjgsOCIvPjwvc3ZnPg==");
-        background-size: 100% 100%;
-        margin-bottom: 15px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        background-size: 100% 100%; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
-
     @media (max-width: 768px) { :root { --grid-size: 160px; } }
 
-    /* 拆解圖樣式 */
-    .breakdown-section {
-        background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-top: 15px;
-    }
+    .breakdown-section { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-top: 15px; }
     .breakdown-grid { display: flex; flex-wrap: wrap; gap: 8px; }
     .step-box {
         width: 60px; height: 60px; border: 1px solid #ccc; border-radius: 5px; position: relative; background: white;
@@ -151,35 +132,23 @@
     .step-number { position: absolute; bottom: 2px; right: 2px; font-size: 10px; color: #999; }
     .step-box.is-last { border: 2px solid var(--accent); }
 
-    /* 資訊欄 */
     .info-item { margin-bottom: 15px; border-bottom: 1px solid #ffe0b2; padding-bottom: 10px; }
     .info-big-char { font-size: 40px; color: var(--accent); font-weight: bold; font-family: "標楷體"; }
-    .info-radical-link {
-        color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: bold;
-    }
+    .info-radical-link { color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: bold; }
     .info-row { margin-bottom: 5px; font-size: 18px; color: #444; }
 
-    /* 單字詞性標籤 (小號) */
+    /* 單字級詞性 (小號) */
     .pos-container { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
     .pos-tag {
         font-size: 14px; padding: 2px 8px; border-radius: 12px;
-        color: white; font-weight: bold; background-color: #78909c; 
-        box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+        color: white; font-weight: bold; background-color: #78909c; box-shadow: 0 2px 0 rgba(0,0,0,0.1);
     }
     .pos-tag.noun { background-color: #42a5f5; } 
     .pos-tag.verb { background-color: #66bb6a; } 
     .pos-tag.adj { background-color: #ffa726; }  
 
-    /* 解釋文字 */
-    .js-def-text {
-        white-space: pre-wrap; 
-        line-height: 1.8;      
-        text-align: left;
-        color: #444;
-        font-size: 18px;
-    }
+    .js-def-text { white-space: pre-wrap; line-height: 1.8; text-align: left; color: #444; font-size: 18px; }
 
-    /* Modal */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.5); z-index: 200; display: none;
@@ -198,27 +167,14 @@
         background: #fff3e0; border-radius: 10px; font-family: "標楷體";
     }
 
-    /* ================= 🔥 全覽模式 (Overview Mode) ================= */
-    body.overview-mode #characters-container {
-        flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: stretch;
-    }
-    
-    body.overview-mode .word-group-wrapper {
-        width: 45%; 
-        min-width: 300px;
-        margin: 10px;
-        border-top: 8px solid var(--primary); 
-    }
-
+    /* 全覽模式 */
+    body.overview-mode #characters-container { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: stretch; }
+    body.overview-mode .word-group-wrapper { width: 45%; min-width: 300px; margin: 10px; border-top: 8px solid var(--primary); }
     body.overview-mode .word-main-flex { display: none !important; }
-
     body.overview-mode .word-group-header { border-bottom: none; margin-bottom: 5px; }
-    
-    body.overview-mode .word-definition-footer {
-        border-top: 1px solid #eee; padding-top: 15px; margin-top: 0;
-    }
+    body.overview-mode .word-definition-footer { border-top: 1px solid #eee; padding-top: 15px; margin-top: 0; }
 
-    /* ================= 列印專用樣式 ================= */
+    /* 列印樣式 */
     #print-container { display: none; }
     @media print {
         @page { size: A4; margin: 10mm; }
@@ -227,39 +183,20 @@
         #print-container { display: block !important; }
         
         .print-page-header { text-align: center; border-bottom: 2px solid black; margin-bottom: 20px; padding-bottom: 10px; }
-        .print-row {
-            display: flex; flex-direction: column; margin-bottom: 25px; 
-            border-bottom: 1px dashed #ccc; padding-bottom: 15px;
-            page-break-inside: avoid;
-        }
-        
+        .print-row { display: flex; flex-direction: column; margin-bottom: 25px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; page-break-inside: avoid; }
         .print-main-line { display: flex; align-items: center; margin-bottom: 10px; }
-        
-        .print-info-col { 
-            display: flex; flex-wrap: wrap; gap: 10px; 
-            padding-right: 15px; border-right: 2px solid #000; margin-right: 15px;
-            width: 150px; 
-            justify-content: center; align-content: center;
-        }
+        .print-info-col { display: flex; flex-wrap: wrap; gap: 10px; padding-right: 15px; border-right: 2px solid #000; margin-right: 15px; width: 150px; justify-content: center; align-content: center; }
         .print-char-block { text-align: center; margin-bottom: 5px; } 
         .print-char-big { font-size: 56px; font-family: "標楷體"; font-weight: bold; line-height: 1; }
         .print-pinyin { display: none; }
-        
         .print-grid-container { flex: 1; display: flex; gap: 5px; }
         .print-grid-box {
             width: 70px; height: 70px; border: 1px solid #000;
             background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc3MCcgaGVpZ2h0PSc3MCc+CiAgPGxpbmUgeDE9JzAnIHkxPSczNScgeDI9JzcwJyB5Mj0nMzUnIHN0cm9rZT0nI2NjYycgc3Ryb2tlLXdpZHRoPScwLjUnIHN0cm9rZS1kYXNoYXJyYXk9JzMsMycvPgogIDxsaW5lIHgxPSczNScgeTE9JzAnIHgyPSczNScgeTI9JzcwJyBzdHJva2U9JyNjY2MnIHN0cm9rZS13aWR0aD0nMC41JyBzdHJva2UtZGFzaGFycmF5PSczLDMnLz4KPC9zdmc+");
         }
-        
         .print-breakdown-area { margin-left: 20px; }
-        .print-breakdown-row { 
-            display: flex; align-items: center; margin-top: 8px; 
-            border-bottom: 1px dotted #eee; padding-bottom: 5px; 
-        }
-        .print-label { 
-            font-size: 16px; font-weight: bold; color: #000; 
-            width: 40px; flex-shrink: 0;
-        }
+        .print-breakdown-row { display: flex; align-items: center; margin-top: 8px; border-bottom: 1px dotted #eee; padding-bottom: 5px; }
+        .print-label { font-size: 16px; font-weight: bold; color: #000; width: 40px; flex-shrink: 0; }
         .print-breakdown-imgs { display: flex; flex-wrap: wrap; gap: 5px; }
         .print-step-box { width: 35px; height: 35px; border: 1px solid #ccc; position: relative; }
     }
@@ -273,7 +210,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (詞語合併)</button>
         </div>
 
-        <h1>📘 中文科識字通 (V11.0 智能詞語詞性版)</h1>
+        <h1>📘 中文科識字通 (V12.0 智能語意分析版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -307,6 +244,7 @@
         <div class="word-group-wrapper">
             <div class="word-group-header">
                 <div class="title-block">
+                    <span class="word-label-small">詞語：</span>
                     <span class="word-title js-title"></span>
                     <div class="js-word-pos"></div> </div>
                 <div class="audio-controls">
@@ -392,7 +330,7 @@
                     }
                     updateDefinition(word, card);
                     
-                    // 🔥 啟動詞語級詞性查詢
+                    // 🔥 啟動智能詞性偵測 (掃描解釋文)
                     fetchWordPOS(word, card);
                 }
             } catch (err) {
@@ -406,8 +344,7 @@
         function createCardElement(word) {
             const template = document.getElementById('card-template');
             const clone = template.content.cloneNode(true);
-            const title = (word.length === 1) ? `生字：${word}` : `詞語：${word}`;
-            clone.querySelector('.js-title').textContent = title;
+            clone.querySelector('.js-title').textContent = word;
             clone.querySelector('.js-btn-mandarin').onclick = () => speakText(word, 'zh-CN');
             clone.querySelector('.js-btn-cantonese').onclick = () => speakText(word, 'zh-HK');
             return clone.children[0];
@@ -496,7 +433,6 @@
             }
         }
 
-        // --- 🔥 智能詞性查詢 (單字級) ---
         function setupCharacterInfo(char, cardElement) {
             const infoContainer = cardElement.querySelector('.js-info-container');
             const pinyin = cnchar.spell(char, 'tone');
@@ -518,7 +454,7 @@
                 </div>
             `;
             infoContainer.appendChild(div);
-            // 查詢單字詞性 (即便已經有詞語詞性，單字屬性仍具教學價值)
+            // 查詢單字詞性
             fetchPOS(char, div.querySelector('.pos-container'));
         }
 
@@ -552,30 +488,46 @@
             } catch(e) {}
         }
 
-        // --- 🔥 智能詞語級詞性查詢 (整詞優先) ---
+        // --- 🔥 智能詞語級詞性 (掃描解釋版) ---
         async function fetchWordPOS(word, cardElement) {
             const container = cardElement.querySelector('.js-word-pos');
             try {
-                // 查詢萌典詞條
                 const res = await fetch(`https://www.moedict.tw/a/${encodeURIComponent(word)}.json`);
                 if(!res.ok) return;
                 const data = await res.json();
                 
                 const types = new Set();
+                
+                // 1. 優先查看官方 type 欄位
                 if(data.h) {
                     data.h.forEach(h => {
                         if(h.d) {
                             h.d.forEach(d => {
                                 if(d.type) types.add(d.type.replace('詞',''));
+                                // 2. 智能掃描：如果沒有 type，掃描解釋內文尋找 [名] [動] 等標記
+                                if(d.f && d.f.match(/\[(名|動|形|副)\]/)) {
+                                    const match = d.f.match(/\[(名|動|形|副)\]/);
+                                    if(match) types.add(match[1]);
+                                }
                             });
                         }
                     });
                 }
 
+                // 3. 如果還是沒有，啟動關鍵字偵測 (Fallback)
+                // 針對「學校」這種常見詞，字典解釋可能寫「子弟求學的地方」，雖沒標籤但肯定是名詞
+                // 這裡做一個簡單的補救：
+                if(types.size === 0) {
+                    // 掃描解釋，如果有「...的地方」、「...的機構」通常是名詞
+                    const fullDef = JSON.stringify(data);
+                    if(fullDef.includes('的地方') || fullDef.includes('的機構')) types.add('名');
+                }
+
+                // 渲染
                 if(types.size > 0) {
                     types.forEach(type => {
                         const tag = document.createElement('span');
-                        tag.className = 'word-pos-tag'; // 使用大號標籤樣式
+                        tag.className = 'word-pos-tag';
                         tag.innerText = type;
                         if(type.includes('名')) tag.classList.add('noun');
                         else if(type.includes('動')) tag.classList.add('verb');
