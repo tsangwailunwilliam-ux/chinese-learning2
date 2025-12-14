@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文科識字通 (最終修復版)</title>
+<title>中文科識字通 (顯示修復版)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
@@ -181,7 +181,7 @@
             <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (含筆畫拆解)</button>
         </div>
 
-        <h1>📘 中文科識字通 (最終修復版)</h1>
+        <h1>📘 中文科識字通 (顯示修復版)</h1>
 
         <div class="input-section">
             <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
@@ -342,7 +342,7 @@
             setTimeout(() => generateBreakdown(char, breakdownContainer, false), 500);
         }
 
-        // --- 🔥 終極修正版：筆畫拆解生成 ---
+        // --- 🔥 最終顯示修復版：筆畫拆解 ---
         async function generateBreakdown(char, container, isPrint) {
             container.innerHTML = '<span style="font-size:12px; color:#999;">讀取中...</span>';
 
@@ -379,23 +379,22 @@
                     }
                     container.appendChild(box);
 
-                    // ✨ 這裡修正了：不再呼叫不存在的 showStroke
-                    // 而是利用 strokeColor callback 來控制透明度
+                    // ✨ 這裡是最重要的修正！
                     const writer = HanziWriter.create(box, char, {
                         width: size, height: size, padding: 2, showOutline: true,
-                        // 使用成功獲取的數據
+                        // 1. 餵入數據
                         charDataLoader: (c, cb) => cb(charData),
-                        // 顏色邏輯：當前筆畫(i)紅色，過去筆畫(<i)灰色，未來筆畫(>i)透明
+                        // 2. 設定顏色：未來筆畫設為透明
                         strokeColor: (data) => {
-                            if(data.strokeNum === i) return '#d84315';
-                            if(data.strokeNum < i) return '#555';
-                            return 'rgba(0,0,0,0)'; // 透明
+                            if(data.strokeNum === i) return '#d84315'; // 當前紅
+                            if(data.strokeNum < i) return '#555';     // 過去灰
+                            return 'rgba(0,0,0,0)';                   // 未來透明
                         },
-                        radicalColor: null // 避免部首顏色干擾
+                        radicalColor: null
                     });
                     
-                    // 不需要 hideCharacter 或 loop showStroke
-                    // 因為我們已經在 create 的時候用 strokeColor 設定好可見度了
+                    // ✨ 3. 開燈！一定要呼叫 showCharacter，不然預設是隱藏的
+                    writer.showCharacter();
                 }
 
             } catch(e) { 
