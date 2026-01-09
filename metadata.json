@@ -1,0 +1,8 @@
+{
+  "name": "中文識字通 AI (課堂實戰版)",
+  "description": "結合 Gemini AI 的繁體中文教學工具，包含筆順互動、自動解釋造句、字源探索及列印功能。",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

@@ -1,882 +1,132 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>中文識字通 (V19.0 最終修復版)</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>中文識字通 AI (V18.6 課堂實戰版)</title>
 
-<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/cnchar-trad/cnchar.trad.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/cnchar-radical/cnchar.radical.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-<style>
-    :root {
-        --primary: #FF9800; --primary-light: #FFF3E0; --accent: #FF5252; --success: #4CAF50;
-        --text-main: #5D4037; --bg-body: #FFF8E1; --bg-white: #ffffff;
-        --radius-box: 20px; --grid-size: 260px;
-    }
-    body {
-        font-family: "微軟正黑體", sans-serif; background-color: var(--bg-body); color: var(--text-main);
-        margin: 0; padding: 20px; text-align: center;
-        background-image: radial-gradient(#ffe0b2 15%, transparent 16%), radial-gradient(#ffe0b2 15%, transparent 16%);
-        background-size: 60px 60px; background-position: 0 0, 30px 30px;
-    }
-    h1 { color: var(--primary); letter-spacing: 2px; margin-bottom: 20px; text-shadow: 2px 2px 0 #fff; }
-    
-    /* 工具列 */
-    .toolbar {
-        position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.95); padding: 10px;
-        display: flex; justify-content: center; gap: 15px; backdrop-filter: blur(5px);
-        border-bottom: 3px solid #FFCC80; flex-wrap: wrap; border-radius: 0 0 20px 20px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }
-    .tool-btn {
-        padding: 8px 20px; border-radius: 20px; border: 2px solid var(--primary);
-        background: white; color: var(--primary); font-weight: bold; cursor: pointer; transition: 0.2s;
-    }
-    .tool-btn:hover { background: var(--primary-light); transform: translateY(-2px); }
-    .tool-btn.active-mode { background: var(--primary); color: white; }
-    
-    .star-counter {
-        display: flex; align-items: center; gap: 5px; font-size: 20px; font-weight: bold; color: var(--primary);
-        background: white; padding: 5px 15px; border-radius: 20px; border: 2px solid #FFD54F;
-    }
-
-    /* 輸入區 */
-    .input-section {
-        background: var(--bg-white); padding: 30px; border-radius: var(--radius-box);
-        box-shadow: 0 10px 25px rgba(93,64,55,0.1); display: inline-block;
-        margin: 30px 0; border: 4px solid #FFCC80; position: relative;
-    }
-    input[type="text"] {
-        font-size: 28px; padding: 10px; width: 300px; text-align: center; color: var(--text-main);
-        border: 2px solid #FFCC80; border-radius: 10px;
-    }
-    button.main-btn {
-        font-size: 24px; padding: 10px 30px; margin-left: 10px; background-color: var(--primary);
-        color: white; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 0 #E65100;
-    }
-    button.main-btn:active { transform: translateY(4px); box-shadow: none; }
-
-    #qrcode-container {
-        display: none; flex-direction: column; align-items: center; margin-top: 20px;
-        padding: 20px; background: #fff3e0; border-radius: 15px; border: 2px dashed #ffb74d;
-    }
-
-    /* 卡片容器 */
-    #characters-container { display: flex; flex-direction: column; align-items: center; gap: 40px; }
-    .word-group-wrapper {
-        background: var(--bg-white); width: 95%; max-width: 1400px; padding: 30px;
-        border-radius: var(--radius-box); box-shadow: 0 15px 30px rgba(93,64,55,0.08);
-        border-bottom: 6px solid #FFCC80; text-align: left; animation: fadeInUp 0.5s ease-out;
-    }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-    .word-group-header {
-        display: flex; justify-content: space-between; align-items: center;
-        border-bottom: 2px dashed #FFECB3; padding-bottom: 15px; margin-bottom: 20px;
-    }
-    .title-block { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
-    .word-title { font-size: 56px; font-weight: bold; color: var(--primary); line-height: 1.2; }
-    .word-pos-tag {
-        font-size: 20px; padding: 6px 15px; border-radius: 20px; color: white; font-weight: bold;
-        background-color: #78909c; margin-left: 10px;
-    }
-    .word-pos-tag.noun { background-color: #29B6F6; }
-    .word-pos-tag.verb { background-color: #66BB6A; }
-    .word-pos-tag.adj { background-color: #FFA726; }
-    
-    .audio-controls button {
-        background: var(--primary-light); color: var(--text-main); border: 2px solid #FFE0B2;
-        padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-left: 10px;
-    }
-
-    /* Tab 分頁 */
-    .tab-container { width: 100%; margin-bottom: 20px; }
-    .tab-header { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-    .tab-btn {
-        padding: 10px 25px; border-radius: 20px; border: 2px solid #ddd; background: #f5f5f5;
-        color: #888; font-weight: bold; cursor: pointer; font-size: 22px; transition: 0.2s;
-    }
-    .tab-btn.active {
-        background: var(--primary); color: white; border-color: var(--primary);
-        box-shadow: 0 4px 10px rgba(255,143,0,0.3); transform: scale(1.1);
-    }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    /* 單字區 */
-    .single-char-section {
-        background: #FFF8E1; border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 2px solid #FFE0B2;
-    }
-    /* 調整佈局：拆解在上 */
-    .breakdown-section {
-        background: white; padding: 15px; border-radius: 15px; border: 1px solid #FFCC80;
-        margin-bottom: 25px; /* 增加底部距離 */
-    }
-    .breakdown-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-    
-    /* 下方練習區 */
-    .char-main-row { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
-    .char-block-item { display: flex; flex-direction: column; align-items: center; }
-    .visual-label {
-        font-size: 20px; font-weight: bold; color: var(--text-main); margin-bottom: 15px;
-        width: 100%; border-left: 6px solid var(--primary); padding-left: 10px;
-    }
-    
-    .grid-box {
-        width: var(--grid-size); height: var(--grid-size); background-color: white; border-radius: 15px;
-        border: 4px solid var(--primary); position: relative;
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxsaW5lIHgxPSI1MCUiIHkxPSIwIiB4Mj0iNTAlIiB5Mj0iMTAwJSIgc3Ryb2tlPSIjZmZjY2NjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjgsOCIvPjxsaW5lIHgxPSIwIiB5MT0iNTAlIiB4Mj0iMTAwJSIgeTI9IjUwJSIgc3Ryb2tlPSIjZmZjY2NjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjgsOCIvPjwvc3ZnPg==");
-        background-size: 100% 100%; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    .grid-box.hide-lines { background-image: none; }
-    @media (max-width: 768px) { :root { --grid-size: 200px; } .word-title { font-size: 40px; } }
-
-    .small-btn {
-        padding: 5px 15px; border-radius: 15px; border: 1px solid #ccc; background: white;
-        cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;
-    }
-    .toggle-active { background: #C8E6C9; border-color: #4CAF50; color: #2E7D32; font-weight: bold; }
-
-    /* 拆解步驟格 */
-    .step-box {
-        width: 60px; height: 60px; border: 1px solid #ccc; border-radius: 8px; position: relative;
-        background: white; display: flex; justify-content: center; align-items: center;
-    }
-    .step-box svg { width: 100%; height: 100%; display: block; }
-    .step-number { position: absolute; bottom: 2px; right: 2px; font-size: 10px; color: #999; }
-    .step-box.is-last { border: 2px solid var(--accent); }
-
-    /* 解釋與造句 */
-    .word-definition-footer {
-        margin-top:20px; border-top: 2px dashed #FFECB3; padding-top:15px;
-        background: #F1F8E9; padding: 20px; border-radius: 15px;
-    }
-    .js-def-text { white-space: pre-wrap; line-height: 1.8; text-align: left; color: #333; font-size: 18px; margin-bottom: 15px; }
-    .sentence-list { margin: 0; padding-left: 25px; text-align: left; }
-    .sentence-item { margin-bottom: 10px; line-height: 1.8; color: #555; font-size: 19px; }
-    .highlight { color: #d84315; font-weight: bold; background: #FFCCBC; padding: 2px 6px; border-radius: 4px; }
-
-    /* Modal */
-    .modal-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
-        z-index: 200; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px);
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-content {
-        background: white; width: 80%; max-width: 600px; padding: 30px;
-        border-radius: 20px; border: 5px solid #FFE0B2; position: relative;
-    }
-    .modal-close { position: absolute; top: 10px; right: 15px; font-size: 30px; cursor: pointer; }
-    .radical-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 20px; }
-    .radical-char-btn {
-        width: 60px; height: 60px; font-size: 30px; border: 1px solid #ddd;
-        display: flex; align-items: center; justify-content: center; cursor: pointer;
-        background: #FFF3E0; border-radius: 10px; font-family: "標楷體";
-    }
-
-    body.overview-mode #characters-container { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: stretch; }
-    body.overview-mode .word-group-wrapper { width: 45%; min-width: 300px; margin: 10px; border-top: 8px solid var(--primary); }
-    body.overview-mode .word-main-flex { display: none !important; }
-    body.overview-mode .word-group-header { border-bottom: none; margin-bottom: 5px; }
-    body.overview-mode .word-definition-footer { border-top: 1px solid #eee; padding-top: 15px; margin-top: 0; }
-
-    #print-container { display: none; }
-    @media print {
-        @page { size: A4; margin: 10mm; }
-        body { background: white; -webkit-print-color-adjust: exact; padding: 0; background-image: none; }
-        #screen-ui, .toolbar, .modal-overlay { display: none !important; }
-        #print-container { display: block !important; }
-        .print-page-header { text-align: center; border-bottom: 2px solid black; margin-bottom: 20px; padding-bottom: 10px; }
-        .print-row { display: flex; flex-direction: column; margin-bottom: 25px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; page-break-inside: avoid; }
-        .print-main-line { display: flex; align-items: center; margin-bottom: 10px; }
-        .print-info-col { display: flex; flex-wrap: wrap; gap: 10px; padding-right: 15px; border-right: 2px solid #000; margin-right: 15px; width: 150px; justify-content: center; align-content: center; }
-        .print-char-block { text-align: center; margin-bottom: 5px; } 
-        .print-char-big { font-size: 56px; font-family: "標楷體"; font-weight: bold; line-height: 1; }
-        .print-grid-container { flex: 1; display: flex; gap: 5px; }
-        .print-grid-box {
-            width: 70px; height: 70px; border: 2px solid #000 !important;
-            background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc3MCcgaGVpZ2h0PSc3MCc+CiAgPGxpbmUgeDE9JzAnIHkxPSczNScgeDI9JzcwJyB5Mj0nMzUnIHN0cm9rZT0nIzAwMDAlJyBzdHJva2Utd2lkdGg9JzEnIHN0cm9rZS1kYXNoYXJyYXk9JzMsMycvPgogIDxsaW5lIHgxPSczNScgeTE9JzAnIHgyPSczNScgeTI9JzcwJyBzdHJva2U9JyMwMDAwJyBzdHJva2Utd2lkdGg9JzEnIHN0cm9rZS1kYXNoYXJyYXk9JzMsMycvPgo8L3N2Zz4=") !important;
-            background-color: white !important;
-        }
-        .print-breakdown-area { margin-left: 20px; }
-        .print-breakdown-row { display: flex; align-items: center; margin-top: 8px; border-bottom: 1px dotted #eee; padding-bottom: 5px; }
-        .print-label { font-size: 16px; font-weight: bold; color: #000; width: 40px; flex-shrink: 0; }
-        .print-breakdown-imgs { display: flex; flex-wrap: wrap; gap: 5px; }
-        .print-step-box { width: 35px; height: 35px; border: 1px solid #333; position: relative; }
-    }
-</style>
-</head>
-<body>
-
-    <div id="screen-ui">
-        <div class="toolbar">
-            <button class="tool-btn" onclick="toggleOverviewMode()" id="btn-overview">👁️ 全覽模式：關</button>
-            <button class="tool-btn" onclick="autoPrint()">🖨️ 列印作業紙 (加深版)</button>
-            <div class="star-counter"><span>⭐</span> <span id="star-count">0</span></div>
-        </div>
-
-        <h1>📘 中文識字通 (V19.0 最終修復版)</h1>
-
-        <div class="input-section">
-            <label style="font-size: 20px; font-weight: bold; color: var(--primary);">請輸入生字或詞語</label><br><br>
-            <input type="text" id="input-text" placeholder="例如：打掃、開心、學校" value="打掃">
-            <button class="main-btn" onclick="generateCards()">🔍 開始練習</button>
-            <button class="main-btn" style="background-color: #ff9800; margin-left: 10px;" onclick="generateQRCode()">📲 生成 QR Code</button>
-            
-            <div id="loading" style="display:none; margin-top:10px; color:var(--primary);">⏳ 資料處理中...</div>
-            
-            <div id="qrcode-container">
-                <span style="font-weight:bold; color:#d84315;">請學生掃描此 Code 即可直接練習：</span>
-                <div id="qrcode-canvas"></div>
-                <button class="tool-btn" onclick="document.getElementById('qrcode-container').style.display='none'" style="margin-top:10px;">關閉</button>
-            </div>
-        </div>
-
-        <div id="characters-container"></div>
-    </div>
-
-    <div id="radical-modal" class="modal-overlay" onclick="closeRadicalModal(event)">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeRadicalModal(null, true)">×</span>
-            <h2 style="color:var(--accent)">🔍 部首字例：<span id="modal-radical-title"></span></h2>
-            <div id="modal-grid" class="radical-grid"></div>
-        </div>
-    </div>
-
-    <div id="print-container">
-        <div class="print-page-header">
-            <h2>中文科寫字練習</h2>
-            <div style="display:flex; justify-content:space-between; padding:0 50px;">
-                <span>姓名：__________</span><span>日期：__________</span><span>分數：__________</span>
-            </div>
-        </div>
-        <div id="print-content"></div>
-    </div>
-
-    <template id="card-template">
-        <div class="word-group-wrapper">
-            <div class="word-group-header">
-                <div class="title-block">
-                    <span class="word-label-small">詞語：</span>
-                    <span class="word-title js-title"></span>
-                    <div class="js-word-pos"></div> 
-                </div>
-                <div class="audio-controls">
-                    <button class="js-btn-mandarin">🔊 普通話</button>
-                    <button class="js-btn-cantonese">🔊 粵語</button>
-                </div>
-            </div>
-            
-            <div class="tab-container">
-                <div class="tab-header js-tab-header"></div>
-                <div class="tab-body js-tab-body"></div>
-            </div>
-
-            <div class="word-definition-footer">
-                <div style="font-weight:bold; color:var(--success)">📖 解釋</div>
-                <div class="js-def-text"></div>
-                <div style="font-weight:bold; color:var(--accent); margin-top: 15px;">🗣️ 造句練習</div>
-                <ul class="sentence-list js-sentence-list"></ul>
-            </div>
-        </div>
-    </template>
-
-    <template id="char-tab-template">
-        <div class="single-char-section">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <div style="font-size:18px; font-weight:bold; color:#8D6E63;">
-                    字：<span class="js-char-title" style="font-size:24px; color:var(--primary);"></span>
-                </div>
-                <div class="js-info-container"></div>
-                <button class="small-btn js-toggle-grid">📏 隱藏格線</button>
-            </div>
-
-            <div class="breakdown-section">
-                <div class="visual-label" style="border-color: var(--accent);">🔢 筆畫拆解 (紅色為當前筆畫)</div>
-                <div class="breakdown-grid js-breakdown-target"><span style="color:#aaa; font-size:12px;">讀取中...</span></div>
-            </div>
-
-            <div class="char-main-row">
-                <div class="char-block-item">
-                    <div class="visual-label">👀 筆順演示</div>
-                    <div class="grid-box js-demo-target"></div>
-                    <button class="tool-btn js-play-btn" style="padding: 2px 10px; font-size: 14px;">▶ 播放</button>
-                </div>
-                <div class="char-block-item">
-                    <div class="visual-label label-quiz">✏️ 學生練習</div>
-                    <div class="grid-box js-quiz-target" style="cursor:crosshair"></div>
-                    <div style="display:flex; gap:10px; align-items:center; margin-top:5px;">
-                        <span class="js-status-text" style="font-weight:bold; color:var(--accent)">請寫字</span>
-                        <button class="tool-btn js-reset-btn" style="padding: 2px 10px; font-size: 14px;">重寫</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
-
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // 音效與煙火
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
-            if (type === 'correct') { 
-                osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime+0.1);
-                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.2);
-                osc.start(); osc.stop(audioCtx.currentTime+0.2);
-            } else if (type === 'complete') { 
-                [400, 500, 600].forEach((freq, i) => {
-                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type = 'triangle';
-                    o.frequency.value = freq; g.gain.setValueAtTime(0.2, audioCtx.currentTime+i*0.1); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+i*0.1+0.3);
-                    o.start(audioCtx.currentTime+i*0.1); o.stop(audioCtx.currentTime+i*0.1+0.3);
-                });
-            }
-        }
-        let stars = 0;
-        function addStar() {
-            stars++; document.getElementById('star-count').innerText = stars;
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); playSound('complete');
-        }
-
-        // 🔥🔥🔥 強化版資料庫：完整句型 (SVO) + 形容詞 🔥🔥🔥
-        const VOCAB_DB = {
-            // [認識自己]
-            "頭髮": { def: "頭上的毛。", sent: ["妹妹有一頭烏黑亮麗的長<b>頭髮</b>。", "每天早上，我都要梳理亂蓬蓬的<b>頭髮</b>。"] },
-            "肩膀": { def: "頸部兩旁，手臂連接身體的部位。", sent: ["爸爸寬闊的<b>肩膀</b>讓我感到很有安全感。", "書包太重了，背得我<b>肩膀</b>痠痛。"] },
-            "儀容": { def: "人的外表容貌。", sent: ["學生每天都要保持整潔的<b>儀容</b>回學校。", "出門前，我會照鏡子整理自己的<b>儀容</b>。"] },
-            "培養": { def: "長期教育訓練。", sent: ["我們要從小<b>培養</b>閱讀的好習慣。", "學校致力為社會<b>培養</b>優秀的人才。"] },
-            "自信": { def: "相信自己有能力。", sent: ["他充滿<b>自信</b>地走上舞台進行演講。", "只要有<b>自信</b>，我們就能克服困難。"] },
-            "骨骼": { def: "構成身體支架的骨頭。", sent: ["多喝牛奶有助我們的<b>骨骼</b>健康強壯。", "人體的<b>骨骼</b>負責支撐著身體。"] },
-            "皮膚": { def: "身體表面的組織。", sent: ["嬰兒的<b>皮膚</b>摸起來非常嫩滑。", "夏天曬太陽太多會傷害我們的<b>皮膚</b>。"] },
-            "醜陋": { def: "樣子難看。", sent: ["外表<b>醜陋</b>不代表心腸壞，內在美更重要。", "這個童話故事裡的巫婆樣子很<b>醜陋</b>。"] },
-            "興趣": { def: "喜好的情緒。", sent: ["我對畫畫很有<b>興趣</b>，經常練習。", "哥哥最大的<b>興趣</b>是收集各國郵票。"] },
-            "恆心": { def: "持久不變的意志。", sent: ["做事要有<b>恆心</b>，不能半途而廢。", "他憑著<b>恆心</b>終於學會了彈鋼琴。"] },
-            "耐心": { def: "心裏不急躁。", sent: ["老師很有<b>耐心</b>地教導我們寫字。", "請你保持<b>耐心</b>，排隊等候巴士。"] },
-            "眉毛": { def: "眼眶上緣的毛。", sent: ["他的<b>眉毛</b>濃密，看起來很有精神。", "姐姐正在鏡子前畫<b>眉毛</b>。"] },
-            "肌肉": { def: "能收縮產生力量的肉。", sent: ["運動員的<b>肌肉</b>非常結實有力。", "經常做運動可以鍛鍊身體的<b>肌肉</b>。"] },
-            "肥胖": { def: "脂肪過多。", sent: ["過度<b>肥胖</b>會影響身體健康。", "他因為<b>肥胖</b>而開始每天跑步減肥。"] },
-            "態度": { def: "對人事的看法和舉止。", sent: ["小明的學習<b>態度</b>非常認真。", "這家餐廳的服務員<b>態度</b>很親切。"] },
-            "血液": { def: "體內流動的紅色液體。", sent: ["<b>血液</b>把氧氣輸送到全身各個器官。", "受傷流血時，要按住傷口止住<b>血液</b>。"] },
-            "脂肪": { def: "儲存能量的物質。", sent: ["我們要少吃高<b>脂肪</b>的油炸食物。", "做帶氧運動可以有效燃燒<b>脂肪</b>。"] },
-            "瘦弱": { def: "身體單薄無力。", sent: ["他身體比較<b>瘦弱</b>，容易生病。", "那隻流浪貓看起來非常<b>瘦弱</b>可憐。"] },
-            "汗": { def: "皮膚排出的液體。", sent: ["運動後，我流了一身臭<b>汗</b>。", "天氣真熱，大家都熱得滿頭大<b>汗</b>。"] },
-            "強壯": { def: "身體結實有力。", sent: ["多做運動會讓身體變得更<b>強壯</b>。", "那頭牛長得非常<b>強壯</b>有力。"] },
-            "願意": { def: "心裏想要、同意。", sent: ["你<b>願意</b>幫我一個小忙嗎？", "我<b>願意</b>參加這次的義工活動。"] },
-            "討厭": { def: "不喜歡、厭惡。", sent: ["我最<b>討厭</b>吃苦瓜的味道。", "隨地吐痰是很令人<b>討厭</b>的行為。"] },
-            "堅強": { def: "強固有力，不可動搖。", sent: ["她性格<b>堅強</b>，遇到挫折也不哭。", "我們要<b>堅強</b>地面對生活中的困難。"] },
-            "認真": { def: "態度嚴謹不馬虎。", sent: ["他做事非常<b>認真</b>，從不馬虎。", "上課時，我們要<b>認真</b>聽老師講課。"] },
-            "缺陷": { def: "欠缺或不完美的地方。", sent: ["每個人都有優點和<b>缺陷</b>，要互相包容。", "這個計劃有一點小<b>缺陷</b>需要改進。"] },
-            "喜愛": { def: "喜歡、愛好。", sent: ["我最<b>喜愛</b>的動物是可愛的熊貓。", "大家都非常<b>喜愛</b>這個聰明的寶寶。"] },
-            "羨慕": { def: "看見別人好也希望自己有。", sent: ["我真<b>羨慕</b>你會彈優美的鋼琴。", "不要只<b>羨慕</b>別人，自己也要努力爭取。"] },
-            "謹慎": { def: "小心仔細。", sent: ["過馬路時要非常<b>謹慎</b>，注意車輛。", "他說話很<b>謹慎</b>，從不亂說別人的壞話。"] },
-            "尊重": { def: "敬重、重視。", sent: ["我們要<b>尊重</b>別人的不同意見。", "<b>尊重</b>師長是學生的基本本分。"] },
-            "誠實": { def: "不說謊、老實。", sent: ["<b>誠實</b>是做人最重要的美德。", "華盛頓是個<b>誠實</b>的孩子，承認了錯誤。"] },
-            
-            // [食物]
-            "吃": { def: "進食。", sent: ["我喜歡<b>吃</b>香甜的紅蘋果。", "大家圍在一起開心地<b>吃</b>晚飯。"] },
-            "飲": { def: "喝。", sent: ["多<b>飲</b>水有益身體健康。", "我們去茶樓<b>飲</b>茶吃點心。"] },
-            "烹調": { def: "煮食。", sent: ["媽媽擅長<b>烹調</b>各種美味的菜餚。", "這道菜的<b>烹調</b>方法非常簡單。"] },
-            "蒸": { def: "利用水蒸氣弄熟食物。", sent: ["媽媽<b>蒸</b>了一條鮮味的海魚。", "剛出爐的<b>蒸</b>包子熱騰騰的，很好吃。"] },
-            "炒": { def: "在鍋裡翻動食物。", sent: ["廚師在廚房裡忙著<b>炒</b>菜。", "我最愛吃媽媽做的蛋<b>炒</b>飯。"] },
-            "咬": { def: "用牙齒夾住或切斷。", sent: ["小狗喜歡在花園裡<b>咬</b>骨頭。", "吃蘋果時要大口地<b>咬</b>下去。"] },
-            "飢餓": { def: "肚子空，想吃東西。", sent: ["感到<b>飢餓</b>時，肚子會咕咕叫。", "貧窮地區的人們正忍受着<b>飢餓</b>。"] },
-            "飽": { def: "吃足了。", sent: ["我吃得好<b>飽</b>，肚子都圓了。", "大家<b>飽</b>餐一頓後感到很滿足。"] },
-            "早餐": { def: "早晨吃的飯。", sent: ["<b>早餐</b>要吃得豐富才有精神上學。", "我今天吃了三文治做<b>早餐</b>。"] },
-            "午餐": { def: "中午吃的飯。", sent: ["我們和同學一起在學校吃<b>午餐</b>。", "今天的<b>午餐</b>有雞腿和青菜。"] },
-            "晚餐": { def: "晚上的飯。", sent: ["一家人聚在一起吃豐富的<b>晚餐</b>。", "這頓<b>晚餐</b>是媽媽親手做的。"] },
-            "衛生": { def: "清潔保健康。", sent: ["我們要注意飲食<b>衛生</b>，避免生病。", "保持環境<b>衛生</b>是大家的責任。"] },
-            "新鮮": { def: "剛生產的，沒有變質。", sent: ["街市裏的水果看起來很<b>新鮮</b>。", "郊外的空氣特別<b>新鮮</b>。"] },
-            "清潔": { def: "乾淨。", sent: ["我们要<b>清潔</b>自己的房間。", "保持校園<b>清潔</b>。"] },
-            "有益": { def: "有好處。", sent: ["多做運動<b>有益</b>身心健康。", "多吃蔬菜對身體<b>有益</b>。"] },
-            "豐富": { def: "種類多或數量大。", sent: ["這本書的內容非常<b>豐富</b>。", "我們吃了一頓<b>豐富</b>的晚餐。"] },
-            "營養": { def: "養分。", sent: ["牛奶含有豐富的<b>營養</b>。", "我們要吸收各種<b>營養</b>才能長高。"] },
-            "廚師": { def: "煮菜的人。", sent: ["爸爸是位出色的<b>廚師</b>。", "<b>廚師</b>正在廚房裡忙著炒菜。"] },
-            "購買": { def: "買。", sent: ["媽媽去超市<b>購買</b>日用品。", "我想用零用錢<b>購買</b>這本書。"] },
-            "衣服": { def: "穿在身上的物品。", sent: ["我有很多漂亮的<b>衣服</b>。", "天冷了，多穿件厚<b>衣服</b>。"] },
-            "衣物": { def: "衣服和日用品。", sent: ["請收拾好個人的<b>衣物</b>。", "我們捐贈舊<b>衣物</b>給有需要的人。"] },
-            "校服": { def: "學校規定的服裝。", sent: ["我們每天都要穿著整齊的<b>校服</b>上學。", "我的<b>校服</b>洗得很乾淨。"] },
-            "運動服": { def: "運動時穿的服裝。", sent: ["上體育課時要穿著<b>運動服</b>。", "這套<b>運動服</b>很透氣舒適。"] },
-            "裙子": { def: "一種下身衣物。", sent: ["妹妹穿著一條粉紅色的花<b>裙子</b>。", "這條<b>裙子</b>隨風飄揚，很漂亮。"] },
-            "褲子": { def: "穿在腰部以下的衣服。", sent: ["這條長<b>褲子</b>太長了，不合身。", "我也想要一條藍色的牛仔<b>褲子</b>。"] },
-            "帽子": { def: "戴在頭上的用品。", sent: ["太陽猛烈，記得戴上<b>帽子</b>。", "這頂紅色的<b>帽子</b>很適合你。"] },
-            "眼鏡": { def: "矯正視力的鏡片。", sent: ["爺爺戴著老花<b>眼鏡</b>看報紙。", "我的<b>眼鏡</b>髒了，要擦一擦。"] },
-            "雨衣": { def: "擋雨的衣服。", sent: ["下大雨了，穿上<b>雨衣</b>才不會濕。", "黃色的<b>雨衣</b>在雨中很醒目。"] },
-            "手套": { def: "戴在手上的套子。", sent: ["冬天戴上<b>手套</b>保暖。", "這雙<b>手套</b>是媽媽親手織的。"] },
-            "圍巾": { def: "圍在脖子上的織物。", sent: ["這條長長的<b>圍巾</b>很溫暖。", "繫上<b>圍巾</b>就不怕冷風吹了。"] },
-            "背心": { def: "無袖的上衣。", sent: ["夏天穿<b>背心</b>很涼快。", "這是一件橙色的救生<b>背心</b>。"] },
-            "洗衣機": { def: "洗衣服的機器。", sent: ["把髒衣服放進<b>洗衣機</b>裏洗。", "家裏的<b>洗衣機</b>壞了。"] },
-            "清洗": { def: "洗乾淨。", sent: ["受傷後要先<b>清洗</b>傷口。", "我们要定期<b>清洗</b>冷氣機。"] },
-            "熨斗": { def: "熨衣服的器具。", sent: ["小心<b>熨斗</b>很燙手。", "媽媽用<b>熨斗</b>把衣服熨平。"] },
-            "圖案": { def: "花紋或圖形。", sent: ["這塊布的花<b>圖案</b>很美。", "衣服上有可愛的卡通<b>圖案</b>。"] },
-            
-            // [健康]
-            "疾病": { def: "病。", sent: ["我們要多運動以預防<b>疾病</b>。", "醫生盡力治療病人的<b>疾病</b>。"] },
-            "細菌": { def: "微生物。", sent: ["勤洗手可以殺滅<b>細菌</b>。", "<b>細菌</b>感染會引致生病。"] },
-            "生病": { def: "患病。", sent: ["他<b>生病</b>了，沒有來上學。", "<b>生病</b>時要看醫生和吃藥。"] },
-            "感冒": { def: "傷風。", sent: ["我患了<b>感冒</b>，不停流鼻水。", "<b>感冒</b>時要多喝水和休息。"] },
-            "發熱": { def: "發燒。", sent: ["他<b>發熱</b>了，額頭很燙。", "護士幫病人量度是否<b>發熱</b>。"] },
-            "受傷": { def: "身體損傷。", sent: ["弟弟跌倒<b>受傷</b>了，膝蓋流血。", "手<b>受傷</b>了要包紮。"] },
-            "嚴重": { def: "程度深。", sent: ["他的病情很<b>嚴重</b>，需要住院。", "這是一次<b>嚴重</b>的交通意外。"] },
-            "醫院": { def: "看病的地方。", sent: ["生病了要去<b>醫院</b>看病。", "這家<b>醫院</b>的設備很先進。"] },
-            "醫生": { def: "治病的人。", sent: ["<b>醫生</b>細心地為病人診症。", "長大後我想當一名<b>醫生</b>。"] },
-            "牙醫": { def: "治牙的人。", sent: ["小朋友不要怕看<b>牙醫</b>。", "<b>牙醫</b>幫我拔掉了蛀牙。"] },
-            "護士": { def: "照顧病人的人。", sent: ["<b>護士</b>溫柔地幫病人量體溫。", "白衣天使是對<b>護士</b>的稱呼。"] },
-            "藥物": { def: "治病的物品。", sent: ["生病時要準時服用<b>藥物</b>。", "小孩不可隨便觸摸<b>藥物</b>。"] },
-            "休息": { def: "暫停活動以恢復體力。", sent: ["累了就要多<b>休息</b>。", "午間<b>休息</b>時間，大家都在睡覺。"] },
-            "運動": { def: "體育活動。", sent: ["多做<b>運動</b>身體好。", "學校每年都舉辦<b>運動</b>會。"] },
-            "習慣": { def: "常做的事。", sent: ["養成早睡早起的好<b>習慣</b>。", "咬手指是個壞<b>習慣</b>。"] },
-
-            // [家庭]
-            "家庭": { def: "一家人。", sent: ["我有一個幸福快樂的<b>家庭</b>。", "<b>家庭</b>溫暖最重要。"] },
-            "父母": { def: "爸爸媽媽。", sent: ["我們要孝順<b>父母</b>。", "<b>父母</b>非常愛護子女。"] },
-            "爸爸": { def: "父親。", sent: ["<b>爸爸</b>每天辛勤地去上班。", "我愛我的<b>爸爸</b>。"] },
-            "媽媽": { def: "母親。", sent: ["<b>媽媽</b>在廚房煮飯。", "<b>媽媽</b>的懷抱很溫暖。"] },
-            "兄弟": { def: "哥哥和弟弟。", sent: ["他們是親<b>兄弟</b>。", "四海之內皆<b>兄弟</b>。"] },
-            "哥哥": { def: "兄長。", sent: ["<b>哥哥</b>教我做功課。", "我有一個很疼我的<b>哥哥</b>。"] },
-            "弟弟": { def: "胞弟。", sent: ["<b>弟弟</b>很頑皮，喜歡到處跑。", "我要照顧年幼的<b>弟弟</b>。"] },
-            "姊姊": { def: "胞姊。", sent: ["<b>姊姊</b>長得很漂亮。", "<b>姊姊</b>喜歡畫畫。"] },
-            "妹妹": { def: "胞妹。", sent: ["<b>妹妹</b>哭了，我去哄她。", "可愛的<b>妹妹</b>正在睡覺。"] },
-            "孝順": { def: "盡孝道。", sent: ["我們要<b>孝順</b>父母和長輩。", "他是個<b>孝順</b>的好孩子。"] },
-            "幫忙": { def: "協助。", sent: ["我喜歡<b>幫忙</b>做家務。", "謝謝你的熱心<b>幫忙</b>。"] },
-            
-            // [學校]
-            "學校": { def: "學習的地方。", sent: ["我們的<b>學校</b>很美麗。", "我每天準時到<b>學校</b>上課。"] },
-            "中學": { def: "中等教育。", sent: ["哥哥升上了<b>中學</b>。", "<b>中學</b>的功課比小學多。"] },
-            "小學": { def: "初等教育。", sent: ["我就讀這所<b>小學</b>。", "我是快樂的<b>小學</b>生。"] },
-            "老師": { def: "教師。", sent: ["<b>老師</b>用心教導我們。", "我們要尊敬<b>老師</b>。"] },
-            "同學": { def: "同校學習的人。", sent: ["他是我的好<b>同學</b>。", "<b>同學</b>之間要互相幫助。"] },
-            "課室": { def: "教室。", sent: ["我們在<b>課室</b>裏專心上課。", "值日生負責清潔<b>課室</b>。"] },
-            "圖書館": { def: "藏書的地方。", sent: ["我們去<b>圖書館</b>借故事書。", "<b>圖書館</b>裏要保持安靜。"] },
-            "禮堂": { def: "集會的大廳。", sent: ["全校同學在<b>禮堂</b>週會。", "學校的<b>禮堂</b>很大。"] },
-            "操場": { def: "運動的地方。", sent: ["我們在<b>操場</b>上跑步。", "小息時，<b>操場</b>上很熱鬧。"] },
-            "功課": { def: "作業。", sent: ["我要認真做<b>功課</b>。", "今天的<b>功課</b>很容易。"] },
-            "書包": { def: "裝書的袋子。", sent: ["我背著<b>書包</b>上學去。", "<b>書包</b>太重會影響脊骨。"] },
-            "電腦": { def: "計算機。", sent: ["我們在學校學用<b>電腦</b>。", "這部<b>電腦</b>壞了。"] },
-            "音樂": { def: "聲音藝術。", sent: ["我喜歡聽優美的<b>音樂</b>。", "我們上了一節快樂的<b>音樂</b>課。"] },
-            "體育": { def: "身體鍛鍊。", sent: ["<b>體育</b>課是我的最愛。", "多做<b>體育</b>運動身體好。"] },
-
-            // [社區]
-            "社區": { def: "社會區域。", sent: ["這裏的<b>社區</b>設施很完善。", "我們要服務<b>社區</b>。"] },
-            "公園": { def: "供公眾遊樂的地方。", sent: ["週末我們去<b>公園</b>玩耍。", "<b>公園</b>裏有很多人在散步。"] },
-            "商場": { def: "購物中心。", sent: ["媽媽帶我去<b>商場</b>買衣服。", "這個<b>商場</b>正在大減價。"] },
-            "超級市場": { def: "大型商店。", sent: ["我們逛<b>超級市場</b>買菜。", "<b>超級市場</b>裏貨品齊全。"] },
-            "警察": { def: "維持治安的人。", sent: ["<b>警察</b>叔叔捉賊。", "遇到困難可以找<b>警察</b>。"] },
-            "消防員": { def: "救火的人。", sent: ["<b>消防員</b>勇敢地救火。", "我長大想當<b>消防員</b>。"] },
-            "郵差": { def: "派信的人。", sent: ["<b>郵差</b>叔叔每天派信。", "我們在等<b>郵差</b>送信來。"] },
-            "工作": { def: "做事。", sent: ["爸爸努力<b>工作</b>。", "找一份合適的<b>工作</b>。"] },
-
-            // [交通]
-            "交通": { def: "往來運輸。", sent: ["香港的<b>交通</b>很方便。", "我們要遵守<b>交通</b>規則。"] },
-            "巴士": { def: "公車。", sent: ["我們搭<b>巴士</b>去公園。", "<b>巴士</b>站有很多人排隊。"] },
-            "的士": { def: "計程車。", sent: ["爸爸截了一輛<b>的士</b>。", "坐<b>的士</b>比較貴但方便。"] },
-            "地鐵": { def: "地下鐵路。", sent: ["搭<b>地鐵</b>不會塞車。", "<b>地鐵</b>車廂裏很擠迫。"] },
-            "船": { def: "水上交通工具。", sent: ["我們坐<b>船</b>去離島。", "海面上有一艘大<b>船</b>。"] },
-            "飛機": { def: "航空器。", sent: ["我們搭<b>飛機</b>去旅行。", "<b>飛機</b>飛上藍天。"] },
-            "安全": { def: "平安。", sent: ["過馬路要注意<b>安全</b>。", "注意交通<b>安全</b>。"] },
-            "斑馬線": { def: "行人穿越道。", sent: ["過馬路要走<b>斑馬線</b>。", "汽車在<b>斑馬線</b>前停下。"] },
-
-            // [房屋]
-            "大廈": { def: "高樓。", sent: ["這座高樓<b>大廈</b>有很多層。", "我們住在這座<b>大廈</b>裏。"] },
-            "升降機": { def: "電梯。", sent: ["我們搭<b>升降機</b>上樓。", "<b>升降機</b>壞了，要走樓梯。"] },
-            "樓梯": { def: "階梯。", sent: ["行<b>樓梯</b>有益健康。", "上落<b>樓梯</b>要小心。"] },
-            "窗": { def: "通風口。", sent: ["打開<b>窗</b>戶讓空氣流通。", "媽媽在抹<b>窗</b>。"] },
-            "門": { def: "出入口。", sent: ["請隨手關<b>門</b>。", "有人在敲<b>門</b>。"] },
-
-            // [認識香港/中國]
-            "香港": { def: "地名。", sent: ["我愛<b>香港</b>。", "<b>香港</b>是東方之珠。"] },
-            "中國": { def: "國家名。", sent: ["<b>中國</b>地大物博。", "我們是<b>中國</b>人。"] },
-            "國旗": { def: "國家旗幟。", sent: ["學校舉行升<b>國旗</b>儀式。", "五星紅旗是中國的<b>國旗</b>。"] },
-            "熊貓": { def: "國寶動物。", sent: ["我們去海洋公園看<b>熊貓</b>。", "<b>熊貓</b>愛吃竹子。"] },
-            "節日": { def: "紀念日。", sent: ["中秋節是傳統<b>節日</b>。", "大家開心地慶祝<b>節日</b>。"] },
-            "新年": { def: "春節。", sent: ["農曆<b>新年</b>很熱鬧。", "祝你<b>新年</b>快樂。"] },
-            "中秋節": { def: "賞月節日。", sent: ["<b>中秋節</b>一家人吃月餅。", "<b>中秋節</b>晚上月亮很圓。"] },
-            "端午節": { def: "龍舟節。", sent: ["<b>端午節</b>我們會吃粽子。", "<b>端午節</b>有龍舟比賽。"] },
-
-            // [自然/動植物]
-            "太陽": { def: "日。", sent: ["<b>太陽</b>從東方升起。", "冬天曬<b>太陽</b>很舒服。"] },
-            "月亮": { def: "月球。", sent: ["晚上的<b>月亮</b>彎彎的。", "中秋節賞<b>月亮</b>。"] },
-            "花": { def: "植物的花。", sent: ["花園裏開滿了紅<b>花</b>。", "我們一起種<b>花</b>。"] },
-            "草": { def: "草本植物。", sent: ["牛在吃青<b>草</b>。", "公園有大片<b>草</b>地。"] },
-            "樹": { def: "木本植物。", sent: ["大<b>樹</b>可以遮陰。", "我們去山上植<b>樹</b>。"] },
-            "狗": { def: "犬。", sent: ["小<b>狗</b>對著陌生人吠。", "我養了一隻<b>狗</b>。"] },
-            "貓": { def: "貓咪。", sent: ["小<b>貓</b>喜歡捉老鼠。", "<b>貓</b>在睡覺。"] },
-            "魚": { def: "水生動物。", sent: ["金<b>魚</b>在水裏游。", "爸爸養了很多<b>魚</b>。"] },
-
-            // [社交]
-            "請": { def: "禮貌用語。", sent: ["<b>請</b>坐下來。", "<b>請</b>進來。"] },
-            "多謝": { def: "感謝。", sent: ["<b>多謝</b>你的禮物。", "<b>多謝</b>老師的教導。"] },
-            "對不起": { def: "道歉。", sent: ["<b>對不起</b>，我遲到了。", "做錯事要說<b>對不起</b>。"] },
-            "早晨": { def: "早上問候。", sent: ["老師<b>早晨</b>。", "同學大家<b>早晨</b>。"] },
-            "再見": { def: "道別。", sent: ["放學跟老師說<b>再見</b>。", "明天<b>再見</b>。"] },
-            "你好": { def: "問候語。", sent: ["<b>你好</b>嗎？", "<b>你好</b>，很高興認識你。"] },
-            "歡迎": { def: "樂意迎接。", sent: ["<b>歡迎</b>光臨。", "<b>歡迎</b>新同學加入。"] }
-        };
-
-        const MANUAL_POS = { '學校': '名', '老師': '名', '學生': '名', '同學': '名', '課本': '名', '書包': '名', '跑步': '動', '游泳': '動', '唱歌': '動', '跳舞': '動', '美麗': '形', '快樂': '形', '乾淨': '形', '聰明': '形' };
-
-        window.onload = function() {
-            const params = new URLSearchParams(window.location.search);
-            if(params.get('q')) {
-                document.getElementById('input-text').value = decodeURIComponent(params.get('q'));
-                generateCards();
-            }
-        };
-
-        function generateQRCode() {
-            const input = document.getElementById('input-text').value.trim();
-            if (!input) { alert("請先輸入文字"); return; }
-            const currentUrl = window.location.href.split('?')[0];
-            const studentUrl = `${currentUrl}?q=${encodeURIComponent(input)}`;
-            const container = document.getElementById('qrcode-canvas');
-            container.innerHTML = '';
-            new QRCode(container, { text: studentUrl, width: 256, height: 256 });
-            document.getElementById('qrcode-container').style.display = 'flex';
-        }
-
-        function toggleOverviewMode() {
-            document.body.classList.toggle('overview-mode');
-            const btn = document.getElementById('btn-overview');
-            const isOverview = document.body.classList.contains('overview-mode');
-            btn.innerText = isOverview ? "👁️ 全覽模式：開" : "👁️ 全覽模式：關";
-            btn.classList.toggle('active-mode', isOverview);
-        }
-
-        async function generateCards() {
-            const input = document.getElementById('input-text').value.trim();
-            const container = document.getElementById('characters-container');
-            const loading = document.getElementById('loading');
-            if (!input) { alert("請輸入文字"); return; }
-            container.innerHTML = ''; 
-            loading.style.display = 'block';
-            state.writers = {}; 
-
-            try {
-                // 簡易相容處理
-                const word = input;
-                if (!/[\u4e00-\u9fa5]/.test(word)) {
-                    loading.style.display = 'none';
-                    alert("請輸入中文字！");
-                    return;
-                }
-                
-                const card = createCardElement(word);
-                container.appendChild(card); 
-                
-                const chars = word.split('');
-                const tabHeader = card.querySelector('.js-tab-header');
-                const tabBody = card.querySelector('.js-tab-body');
-
-                for (let i = 0; i < chars.length; i++) {
-                    const char = chars[i];
-                    const uid = Math.random().toString(36).substr(2, 9);
-                    
-                    const btn = document.createElement('button');
-                    btn.className = `tab-btn ${i===0 ? 'active' : ''}`;
-                    btn.innerText = char;
-                    btn.onclick = (e) => switchTab(e, tabBody, uid);
-                    tabHeader.appendChild(btn);
-
-                    const contentWrapper = document.createElement('div');
-                    contentWrapper.id = `content-${uid}`;
-                    contentWrapper.className = `tab-content ${i===0 ? 'active' : ''}`;
-                    tabBody.appendChild(contentWrapper);
-
-                    setupCharacterVisuals(char, contentWrapper);
-                    setupCharacterInfo(char, contentWrapper);
-                }
-
-                updateDefinition(word, card);
-                fetchWordPOS(word, card);
-            } catch (err) {
-                console.error(err);
-                alert("發生錯誤：" + err.message);
-            } finally {
-                loading.style.display = 'none';
-            }
-        }
-
-        function switchTab(e, body, targetUid) {
-            const btns = e.target.parentElement.querySelectorAll('.tab-btn');
-            btns.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            const contents = body.querySelectorAll('.tab-content');
-            contents.forEach(c => c.classList.remove('active'));
-            body.querySelector(`#content-${targetUid}`).classList.add('active');
-        }
-
-        function createCardElement(word) {
-            const template = document.getElementById('card-template');
-            const clone = template.content.cloneNode(true);
-            clone.querySelector('.js-title').textContent = word;
-            clone.querySelector('.js-btn-mandarin').onclick = () => speakText(word, 'zh-CN');
-            clone.querySelector('.js-btn-cantonese').onclick = () => speakText(word, 'zh-HK');
-            return clone.children[0];
-        }
-
-        function setupCharacterVisuals(char, container) {
-            const template = document.getElementById('char-tab-template');
-            const clone = template.content.cloneNode(true);
-            const uid = Math.random().toString(36).substr(2, 9);
-            const demoId = `demo-${uid}`;
-            const quizId = `quiz-${uid}`;
-            const breakdownContainer = clone.querySelector('.js-breakdown-target');
-            
-            clone.querySelector('.js-char-title').innerText = char;
-            clone.querySelector('.js-demo-target').id = demoId;
-            clone.querySelector('.js-quiz-target').id = quizId;
-            
-            const toggleBtn = clone.querySelector('.js-toggle-grid');
-            const demoDiv = clone.querySelector('.js-demo-target');
-            const quizDiv = clone.querySelector('.js-quiz-target');
-            toggleBtn.onclick = () => {
-                demoDiv.classList.toggle('hide-lines');
-                quizDiv.classList.toggle('hide-lines');
-                toggleBtn.classList.toggle('toggle-active');
-            };
-
-            const playBtn = clone.querySelector('.js-play-btn');
-            const resetBtn = clone.querySelector('.js-reset-btn');
-            const statusText = clone.querySelector('.js-status-text');
-            
-            container.appendChild(clone);
-            
-            const width = window.innerWidth > 768 ? 260 : 160;
-            const demo = HanziWriter.create(demoId, char, { width: width, height: width, padding: 5, showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 200, strokeColor: '#555' });
-            const quiz = HanziWriter.create(quizId, char, { 
-                width: width, height: width, padding: 5, showOutline: true, 
-                strokeColor: '#333', highlightColor: '#4CAF50', drawingWidth: 20, showHintAfterMisses: 2 
-            });
-            
-            state.writers[uid] = { demo, quiz, status: statusText };
-            startQuizLoop(uid);
-            playBtn.onclick = () => demo.animateCharacter();
-            resetBtn.onclick = () => resetQuiz(uid);
-            setTimeout(() => generateBreakdown(char, breakdownContainer, false), 500);
-        }
-
-        async function generateBreakdown(char, container, isPrint) {
-            if(!isPrint) container.innerHTML = '<span style="font-size:12px; color:#999;">讀取中...</span>';
-            try {
-                const url = `https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${encodeURIComponent(char)}.json`;
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("Network Error");
-                const charData = await res.json();
-                if(!isPrint) container.innerHTML = ''; 
-                const total = charData.strokes.length; 
-                const strokes = charData.strokes;      
-                for (let i = 0; i < total; i++) {
-                    const box = document.createElement('div');
-                    box.className = isPrint ? 'print-step-box' : (i === total - 1 ? 'step-box is-last' : 'step-box');
-                    if(!isPrint) {
-                        const num = document.createElement('span');
-                        num.className = 'step-number';
-                        num.innerText = i + 1;
-                        box.appendChild(num);
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"KaiTi"', '"BiauKai"', '"STKaiti"', '"DFKai-SB"', '"Noto Serif TC"', '"Songti TC"', 'serif'],
+                        serif: ['"KaiTi"', '"BiauKai"', '"STKaiti"', '"DFKai-SB"', '"Noto Serif TC"', '"Songti TC"', 'serif'],
                     }
-                    container.appendChild(box);
-                    const svgNS = "http://www.w3.org/2000/svg";
-                    const svg = document.createElementNS(svgNS, "svg");
-                    svg.setAttribute("viewBox", "0 0 1024 1024");
-                    const g = document.createElementNS(svgNS, "g");
-                    g.setAttribute("transform", "scale(1, -1) translate(0, -900)");
-                    for(let j = 0; j <= i; j++) {
-                        const path = document.createElementNS(svgNS, "path");
-                        path.setAttribute("d", strokes[j]);
-                        if (j === i) { path.setAttribute("fill", "#FF9800"); } 
-                        else { path.setAttribute("fill", "#555"); }
-                        g.appendChild(path);
-                    }
-                    svg.appendChild(g);
-                    box.appendChild(svg);
                 }
-            } catch(e) { 
-                container.innerHTML = `<span style="font-size:12px; color:red;">❌ 錯誤</span>`; 
-            }
-        }
-
-        function setupCharacterInfo(char, container) {
-            const infoContainer = container.querySelector('.js-info-container');
-            const pinyin = cnchar.spell(char, 'tone');
-            let radical = '無';
-            try { radical = cnchar.radical(char)[0].radical; } catch {}
-            const div = document.createElement('div');
-            div.className = 'info-item';
-            div.innerHTML = `
-                <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
-                    <div style="text-align:left; width:100%;">
-                        <div class="info-row">拼音：${pinyin}</div>
-                        <div class="info-row">
-                            部首：<span onclick="openRadicalModal('${radical}')" class="info-radical-link">${radical}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            infoContainer.appendChild(div);
-        }
-
-        async function fetchWordPOS(word, cardElement) {
-            const container = cardElement.querySelector('.js-word-pos');
-            const types = new Set();
-            if (MANUAL_POS[word]) types.add(MANUAL_POS[word]);
-            if (types.size === 0) {
-                try {
-                    const res = await fetch(`https://www.moedict.tw/a/${encodeURIComponent(word)}.json`);
-                    if(res.ok) {
-                        const data = await res.json();
-                        const fullText = JSON.stringify(data);
-                        if(fullText.includes('的地方') || fullText.includes('的機構') || fullText.includes('的總稱') || fullText.includes('名稱')) types.add('名');
-                        if(fullText.includes('形容') || fullText.includes('的樣子')) types.add('形');
-                        if(data.h) data.h.forEach(h => { if(h.d) h.d.forEach(d => { if(d.type) types.add(d.type.replace('詞','')); }); });
-                    }
-                } catch(e) {}
-            }
-            container.innerHTML = '';
-            if(types.size > 0) {
-                types.forEach(type => {
-                    const tag = document.createElement('span');
-                    tag.className = 'word-pos-tag'; 
-                    tag.innerText = type;
-                    if(type.includes('名')) tag.classList.add('noun');
-                    else if(type.includes('動')) tag.classList.add('verb');
-                    else if(type.includes('形')) tag.classList.add('adj');
-                    container.appendChild(tag);
-                });
-            }
-        }
-
-        function startQuizLoop(uid) {
-            const w = state.writers[uid];
-            w.status.innerText = "請寫字"; w.status.style.color = "#d84315";
-            w.quiz.quiz({
-                onMistake: () => { w.status.innerText = "❌"; playSound('wrong'); },
-                onCorrectStroke: () => { w.status.innerText = "✅"; playSound('correct'); },
-                onComplete: () => { w.status.innerText = "🎉 完美"; addStar(); }
-            });
-        }
-        function resetQuiz(uid) { startQuizLoop(uid); }
-
-        function openRadicalModal(radical) {
-            if(!radical || radical === '無') return;
-            document.getElementById('modal-radical-title').innerText = radical;
-            const grid = document.getElementById('modal-grid');
-            grid.innerHTML = '';
-            const matches = HK_COMMON_CHARS.split('').filter(c => {
-                try { return cnchar.radical(c)[0].radical === radical; } catch { return false; }
-            });
-            const uniqueMatches = [...new Set(matches)];
-            uniqueMatches.slice(0, 32).forEach(c => {
-                const btn = document.createElement('div');
-                btn.className = 'radical-char-btn';
-                btn.innerText = c;
-                btn.onclick = () => { document.getElementById('input-text').value += c; closeRadicalModal(null, true); };
-                grid.appendChild(btn);
-            });
-            document.getElementById('radical-modal').classList.add('open');
-        }
-        function closeRadicalModal(e, force) {
-            if (force || e.target.id === 'radical-modal') document.getElementById('radical-modal').classList.remove('open');
-        }
-
-        async function autoPrint() {
-            const input = document.getElementById('input-text').value.trim();
-            if (!input) { alert("請先輸入文字"); return; }
-            const printContent = document.getElementById('print-content');
-            printContent.innerHTML = ''; 
-            const segmenter = new Intl.Segmenter('zh-Hant-HK', { granularity: 'word' });
-            const segments = [...segmenter.segment(input)];
-            for (const seg of segments) {
-                const word = seg.segment;
-                if (!/[\u4e00-\u9fa5]/.test(word)) continue;
-                const row = document.createElement('div');
-                row.className = 'print-row';
-                const mainLine = document.createElement('div');
-                mainLine.className = 'print-main-line';
-                const infoCol = document.createElement('div');
-                infoCol.className = 'print-info-col';
-                const gridContainer = document.createElement('div');
-                gridContainer.className = 'print-grid-container';
-                gridContainer.innerHTML = '<div class="print-grid-box"></div>'.repeat(8);
-                const chars = word.split('');
-                for (let i = 0; i < chars.length; i++) {
-                    const char = chars[i];
-                    const uid = Math.random().toString(36).substr(2, 9);
-                    const charBlock = document.createElement('div');
-                    charBlock.className = 'print-char-block';
-                    charBlock.innerHTML = `<div class="print-char-big" id="p-big-${uid}"></div>`;
-                    infoCol.appendChild(charBlock);
-                    setTimeout(() => {
-                        HanziWriter.create(`p-big-${uid}`, char, { width: 60, height: 60, showOutline: true, strokeColor: '#000' });
-                    }, 100);
-                }
-                mainLine.appendChild(infoCol);
-                mainLine.appendChild(gridContainer);
-                row.appendChild(mainLine);
-                const breakdownArea = document.createElement('div');
-                breakdownArea.className = 'print-breakdown-area';
-                for (const char of chars) {
-                    const breakdownRow = document.createElement('div');
-                    breakdownRow.className = 'print-breakdown-row';
-                    const label = document.createElement('div');
-                    label.className = 'print-label';
-                    label.innerText = char + "：";
-                    breakdownRow.appendChild(label);
-                    const breakdownImgs = document.createElement('div');
-                    breakdownImgs.className = 'print-breakdown-imgs';
-                    breakdownRow.appendChild(breakdownImgs);
-                    breakdownArea.appendChild(breakdownRow);
-                    await generateBreakdown(char, breakdownImgs, true);
-                }
-                row.appendChild(breakdownArea);
-                printContent.appendChild(row);
-            }
-            setTimeout(() => { window.print(); }, 1500);
-        }
-
-        function speakText(text, lang) {
-            window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = lang; window.speechSynthesis.speak(u);
-        }
-        
-        async function updateDefinition(word, cardElement) {
-            const defEl = cardElement.querySelector('.js-def-text');
-            const sentListEl = cardElement.querySelector('.js-sentence-list'); 
-            
-            // 安全獲取 sent
-            const localData = VOCAB_DB[word];
-            if (localData) {
-                defEl.innerHTML = localData.def;
-                const sentences = localData.sent || []; // 防止 undefined
-                sentListEl.innerHTML = sentences.map(s => `<li class="sentence-item">${s}</li>`).join('');
-                return;
-            }
-
-            try {
-                const res = await fetch(`https://www.moedict.tw/a/${encodeURIComponent(word)}.json`);
-                if(res.ok) {
-                    const data = await res.json();
-                    let defs = [];
-                    if(data.h) data.h.forEach(h => { if(h.d) h.d.forEach(d => { if(d.f) defs.push(d.f.replace(/[~`\[\]]/g,"")); })});
-                    
-                    defEl.textContent = defs.length ? defs.map((d,i)=>`${i+1}. ${d}`).join('\n') : "無詳細解釋";
-                    sentListEl.innerHTML = `<li class="sentence-item" style="color:#aaa;">(暫無造句資料)</li>`;
-                } else { 
-                    defEl.textContent = "查無資料"; 
-                    sentListEl.innerHTML = "";
-                }
-            } catch { 
-                defEl.textContent = "無資料"; 
-                sentListEl.innerHTML = "";
             }
         }
     </script>
+    
+    <!-- Babel Standalone for JSX/TSX support -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Google Fonts: Noto Serif TC (as a fallback for KaiTi style) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
+
+    <!-- Helper Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cnchar-trad/cnchar.trad.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cnchar-radical/cnchar.radical.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #FF9800;
+            --primary-dark: #E65100;
+            --primary-light: #FFF3E0;
+            --accent: #FF5252;
+            --success: #4CAF50;
+            --text-main: #5D4037;
+            --bg-body: #FFF8E1;
+            --radius-box: 24px;
+        }
+
+        /* 強制所有元素使用楷書，包含表單控件 */
+        body, button, input, textarea, select {
+            font-family: "KaiTi", "BiauKai", "STKaiti", "DFKai-SB", "Noto Serif TC", "Songti TC", serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            background-image: radial-gradient(#ffe0b2 15%, transparent 16%), radial-gradient(#ffe0b2 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            min-height: 100vh;
+        }
+
+        .hanzi-grid {
+            background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxsaW5lIHgxPSI1MCUiIHkxPSIwIiB4Mj0iNTAlIiB5Mj0iMTAwJSIgc3Ryb2tlPSIjZmZjY2NjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjgsOCIvPjxsaW5lIHgxPSIwIiB5MT0iNTAlIiB4Mj0iMTAwJSIgeTI9IjUwJSIgc3Ryb2tlPSIjZmZjY2NjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjgsOCIvPjwvc3ZnPg==");
+            background-size: 100% 100%;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; background-image: none !important; padding: 0 !important; }
+        }
+        .print-only { display: none; }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .tab-content-enter { animation: tabEnter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        @keyframes tabEnter { 
+            0% { opacity: 0; transform: translateY(10px) scale(0.98); } 
+            100% { opacity: 1; transform: translateY(0) scale(1); } 
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--primary-light); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+    </style>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+        "react": "https://esm.sh/react@^19.2.3",
+        "react-dom": "https://esm.sh/react-dom@^19.2.3",
+        "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
+        "react/jsx-runtime": "https://esm.sh/react@^19.2.3/jsx-runtime",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "react/": "https://esm.sh/react@^19.2.3/"
+      }
+    }
+    </script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- 
+      注意：type="text/babel" 和 data-presets="react,typescript" 是解決 "Unexpected token <" 的關鍵。
+      這允許瀏覽器在運行時編譯 JSX 代碼。
+    -->
+    <script type="text/babel" data-type="module" data-presets="react,typescript">
+        import React, { useState, useEffect, useRef, useMemo } from 'react';
+        import ReactDOM from 'react-dom/client';
+        import App from './App';
+
+        const rootElement = document.getElementById('root');
+        if (!rootElement) {
+            throw new Error("Could not find root element to mount to");
+        }
+
+        const root = ReactDOM.createRoot(rootElement);
+        root.render(
+            <React.StrictMode>
+                <App />
+            </React.StrictMode>
+        );
+    </script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
