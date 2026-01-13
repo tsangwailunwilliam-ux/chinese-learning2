@@ -6,7 +6,7 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
 
 // ✅ 修正 2：安全初始化
 // 如果沒有 Key，先設為 null，避免網頁一打開就白屏死機
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+const ai = apiKey ? new GoogleGenAI(apiKey) : null;
 
 // 🏥 輔助檢查函式：確保要用 AI 時，鑰匙真的存在
 const checkAI = () => {
