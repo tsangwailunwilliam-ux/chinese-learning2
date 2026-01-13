@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 
 declare const HanziWriter: any;
@@ -11,7 +12,14 @@ interface HanziCanvasProps {
   showGrid?: boolean;
 }
 
-const HanziCanvas: React.FC<HanziCanvasProps> = ({ char, type, size = 260, onComplete, onMistake, showGrid = true }) => {
+const HanziCanvas: React.FC<HanziCanvasProps> = ({ 
+  char, 
+  type, 
+  size = 260, 
+  onComplete, 
+  onMistake, 
+  showGrid = true
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const writerRef = useRef<any>(null);
 
@@ -19,7 +27,7 @@ const HanziCanvas: React.FC<HanziCanvasProps> = ({ char, type, size = 260, onCom
     if (!containerRef.current) return;
 
     containerRef.current.innerHTML = '';
-    
+
     writerRef.current = HanziWriter.create(containerRef.current, char, {
       width: size,
       height: size,
@@ -31,14 +39,15 @@ const HanziCanvas: React.FC<HanziCanvasProps> = ({ char, type, size = 260, onCom
       highlightColor: '#4CAF50',
       outlineColor: '#DDD',
       drawingWidth: size * 0.08,
-      showHintAfterMisses: 1 // 修改：寫錯 1 次後自動顯示提示，避免手動調用動畫造成狀態卡死
+      showHintAfterMisses: 3 // Default behavior
     });
 
     if (type === 'quiz') {
       writerRef.current.quiz({
-        onComplete,
-        onMistake: (strokeData: any) => {
-          // 修改：移除 writerRef.current.animateStroke，改由 showHintAfterMisses 自動處理
+        onComplete: () => {
+          if (onComplete) onComplete();
+        },
+        onMistake: () => {
           if (onMistake) onMistake();
         }
       });
@@ -49,7 +58,7 @@ const HanziCanvas: React.FC<HanziCanvasProps> = ({ char, type, size = 260, onCom
         writerRef.current.target.innerHTML = '';
       }
     };
-  }, [char, type, onComplete, onMistake, size]);
+  }, [char, type, size]);
 
   const handleAnimate = () => {
     if (writerRef.current && type === 'demo') {
@@ -60,9 +69,10 @@ const HanziCanvas: React.FC<HanziCanvasProps> = ({ char, type, size = 260, onCom
   const handleReset = () => {
     if (writerRef.current && type === 'quiz') {
       writerRef.current.quiz({
-        onComplete,
-        onMistake: (strokeData: any) => {
-          // 修改：重置時同樣移除手動動畫
+        onComplete: () => {
+          if (onComplete) onComplete();
+        },
+        onMistake: () => {
           if (onMistake) onMistake();
         }
       });

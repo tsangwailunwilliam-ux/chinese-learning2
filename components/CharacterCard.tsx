@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { WordData, GameMode } from '../types';
 import HanziCanvas from './HanziCanvas';
@@ -191,7 +192,9 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ word, mode, onStarAdded, 
         </div>
         
         <div className="flex flex-col items-center">
-          <h3 className="text-2xl font-black border-l-8 border-red-500 pl-4 text-red-800 self-start mb-6">✏️ 學生練習</h3>
+          <div className="flex justify-between w-full items-center mb-6">
+            <h3 className="text-2xl font-black border-l-8 border-red-500 pl-4 text-red-800 self-start">✏️ 學生練習</h3>
+          </div>
           <div key={activeCharIndex} className="tab-content-enter">
             <HanziCanvas 
                 char={chars[activeCharIndex]} 

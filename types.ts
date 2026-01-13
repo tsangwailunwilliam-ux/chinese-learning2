@@ -22,5 +22,15 @@ export interface CharacterInfo {
 
 export enum GameMode {
   NORMAL = 'NORMAL',
-  OVERVIEW = 'OVERVIEW'
+  OVERVIEW = 'OVERVIEW',
+  ASSESSMENT = 'ASSESSMENT'
+}
+
+export type AssessmentDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+
+export interface AssessmentQuestion {
+  id: string;
+  targetWord: string;
+  sentenceParts: string[]; // [prefix, suffix]
+  fullSentence: string;
 }

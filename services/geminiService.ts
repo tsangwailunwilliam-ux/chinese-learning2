@@ -1,5 +1,6 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
-import { WordData } from "../types";
+import { WordData, AssessmentQuestion, AssessmentDifficulty } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -99,6 +100,61 @@ export const getRadicalExamples = async (radical: string): Promise<string[]> => 
     const text = response.text || '[]';
     return JSON.parse(text);
   } catch {
+    return [];
+  }
+};
+
+export const generateAssessment = async (
+  words: string[], 
+  count: number, 
+  difficulty: AssessmentDifficulty
+): Promise<AssessmentQuestion[]> => {
+  // Determine grade level context based on difficulty
+  let levelDesc = "小學一年級至二年級";
+  if (difficulty === 'MEDIUM') levelDesc = "小學三年級至四年級";
+  if (difficulty === 'HARD') levelDesc = "小學五年級至六年級";
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `請生成 ${count} 條中文填充題評估題目。
+    
+    可用詞彙庫：${JSON.stringify(words)}
+    
+    要求：
+    1. 必須從上述「可用詞彙庫」中選擇詞語作為填充答案。
+    2. 如果題目數量 (${count}) 多於可用詞彙量 (${words.length})，請重複使用詞彙，但必須創作不同的句子。
+    3. 難度設定：${difficulty} (適合 ${levelDesc})。句子結構和用詞深度需符合此年級水平。
+    4. 回傳格式為 JSON 陣列。
+    5. 每題包含：
+       - id: 唯一編號
+       - targetWord: 答案詞語
+       - fullSentence: 完整句子
+       - sentenceParts: 將句子以答案詞語切分成的兩部分 [前半句, 後半句]。例如句子是「我喜歡吃飯」，答案是「喜歡」，則 parts 為 ["我", "吃飯"]。`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            id: { type: Type.STRING },
+            targetWord: { type: Type.STRING },
+            fullSentence: { type: Type.STRING },
+            sentenceParts: { 
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          },
+          required: ["id", "targetWord", "fullSentence", "sentenceParts"]
+        }
+      }
+    }
+  });
+
+  try {
+    return JSON.parse(response.text || '[]');
+  } catch (e) {
+    console.error("Assessment generation error", e);
     return [];
   }
 };

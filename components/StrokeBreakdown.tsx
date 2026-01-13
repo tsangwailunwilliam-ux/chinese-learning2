@@ -49,7 +49,7 @@ const StrokeBreakdown: React.FC<StrokeBreakdownProps> = ({ char, isPrint = false
         <div 
           key={i} 
           className={`relative bg-white border flex items-center justify-center overflow-hidden rounded-md
-            ${isPrint ? 'w-12 h-12 border-black border-2' : 'w-14 h-14 md:w-16 md:h-16 border-gray-200'}
+            ${isPrint ? 'w-10 h-10 border-gray-300' : 'w-14 h-14 md:w-16 md:h-16 border-gray-200'}
             ${!isPrint && i === strokes.length - 1 ? 'border-orange-400 ring-2 ring-orange-100' : ''}`}
         >
           <svg viewBox="0 0 1024 1024" className="w-full h-full">
@@ -58,12 +58,12 @@ const StrokeBreakdown: React.FC<StrokeBreakdownProps> = ({ char, isPrint = false
                 <path
                   key={j}
                   d={path}
-                  fill={j === i ? (isPrint ? '#000000' : '#FF9800') : '#555555'}
+                  fill={j === i ? (isPrint ? '#000000' : '#FF9800') : (isPrint ? '#D1D5DB' : '#555555')}
                 />
               ))}
             </g>
           </svg>
-          <span className={`absolute bottom-0 right-1 font-bold ${isPrint ? 'text-[8px] text-gray-800' : 'text-[9px] text-gray-300'}`}>
+          <span className={`absolute bottom-0 right-1 font-bold ${isPrint ? 'text-[8px] text-gray-500' : 'text-[9px] text-gray-300'}`}>
             {i + 1}
           </span>
         </div>

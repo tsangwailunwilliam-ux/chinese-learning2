@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -14,6 +15,7 @@
                     fontFamily: {
                         sans: ['"KaiTi"', '"BiauKai"', '"STKaiti"', '"DFKai-SB"', '"Noto Serif TC"', '"Songti TC"', 'serif'],
                         serif: ['"KaiTi"', '"BiauKai"', '"STKaiti"', '"DFKai-SB"', '"Noto Serif TC"', '"Songti TC"', 'serif'],
+                        kaiti: ['"KaiTi"', '"BiauKai"', '"STKaiti"', '"DFKai-SB"', 'serif'],
                     }
                 }
             }
@@ -51,6 +53,11 @@
         /* 強制所有元素使用楷書，包含表單控件 */
         body, button, input, textarea, select {
             font-family: "KaiTi", "BiauKai", "STKaiti", "DFKai-SB", "Noto Serif TC", "Songti TC", serif;
+        }
+
+        /* Specific class to force KaiTi more aggressively */
+        .font-kaiti {
+            font-family: "KaiTi", "BiauKai", "STKaiti", "DFKai-SB", serif !important;
         }
 
         body {
