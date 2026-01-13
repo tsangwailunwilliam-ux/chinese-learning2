@@ -1,4 +1,4 @@
-import { GoogleGenAI, SchemaType } from "@google/genai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { WordData, AssessmentQuestion, AssessmentDifficulty } from "../types";
 
 // ✅ 修正 1：使用 Vite 專用的方式讀取 API Key
