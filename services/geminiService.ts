@@ -1,18 +1,17 @@
 import { GoogleGenAI, SchemaType } from "@google/genai";
 import { WordData, AssessmentQuestion, AssessmentDifficulty } from "../types";
 
-// ✅ 修正點 1：改用 import.meta.env 來讀取 Vite 的環境變數
-// ✅ 修正點 2：加上空字串 fallback，防止因為 undefined 導致 new GoogleGenAI 直接報錯崩潰
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ""; 
+// ✅ 修正 1：使用 Vite 專用的方式讀取 API Key
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
 
-// 如果沒有 Key，我們先不要初始化 client，等到真正要呼叫的時候再檢查
-// 這樣可以避免網頁一打開就白屏
+// ✅ 修正 2：安全初始化
+// 如果沒有 Key，先設為 null，避免網頁一打開就白屏死機
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-// 一個輔助函式，用來檢查 AI 是否就緒
+// 🏥 輔助檢查函式：確保要用 AI 時，鑰匙真的存在
 const checkAI = () => {
   if (!ai) {
-    console.error("Gemini API Key 尚未設定！請在 .env.local 或 Vercel 設定中加入 VITE_GEMINI_API_KEY");
+    console.error("Gemini API Key 尚未設定！請在 Vercel 設定中加入 VITE_GEMINI_API_KEY");
     throw new Error("API Key missing");
   }
   return ai;
@@ -22,7 +21,7 @@ export const segmentText = async (text: string): Promise<string[]> => {
   try {
     const client = checkAI();
     const response = await client.models.generateContent({
-      model: 'gemini-1.5-flash', // ✅ 建議：改用 flash 模型，速度快且免費額度高，比較不會報錯
+      model: 'gemini-1.5-flash', // ✅ 建議：改用 1.5-flash，速度快且穩定
       contents: `請將以下繁體中文文本進行分詞，以適合小學中文學習的「詞語」為單位。
       例如輸入「中文開發」，應回傳 ["中文", "開發"]。
       例如輸入「中文開發土耳其」，應回傳 ["中文", "開發", "土耳其"]。
@@ -31,15 +30,17 @@ export const segmentText = async (text: string): Promise<string[]> => {
       config: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: SchemaType.ARRAY, // ✅ 注意：有些 SDK 版本是用 SchemaType
+          type: SchemaType.ARRAY, // ✅ 統一使用 SchemaType
           items: { type: SchemaType.STRING }
         }
       }
     });
     
-    return JSON.parse(response.text() || '[]'); // ✅ 修正：response.text 可能是函式或屬性，視版本而定，這裡加個保險
+    // ✅ 修正：使用 response.text() 方法獲取文字
+    const jsonText = response.text() || '[]';
+    return JSON.parse(jsonText);
   } catch (e) {
-    console.error("Segmentation error or AI not ready:", e);
+    console.error("Segmentation error:", e);
     // Fallback: 如果 AI 失敗，嘗試簡單的分割
     return text.split(/[、，；。 \n]/).filter(s => s.length > 0);
   }
@@ -87,7 +88,8 @@ export const generateWordExplanation = async (word: string): Promise<WordData> =
       }
     });
 
-    return JSON.parse(response.text() || '{}') as WordData;
+    const jsonText = response.text() || '{}';
+    return JSON.parse(jsonText) as WordData;
   } catch (e) {
     console.error("Explanation error:", e);
     return {
@@ -172,7 +174,8 @@ export const generateAssessment = async (
       }
     });
 
-    return JSON.parse(response.text() || '[]');
+    const jsonText = response.text() || '[]';
+    return JSON.parse(jsonText);
   } catch (e) {
     console.error("Assessment generation error", e);
     return [];
